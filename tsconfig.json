@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "dist",
+        "outDir": "build",
         "noImplicitAny": false,
         "moduleResolution": "node",
         "target": "es2017",
@@ -20,10 +20,8 @@
     "exclude": [
         "node_modules",
         "dist",
-        "framework",
-        "sample",
-        "server.ts",
-        "demo.tsx",
+        "demo",
+        "build",
         "webpack.config.js"
     ]
 }

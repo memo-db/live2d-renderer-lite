@@ -1,9 +1,10 @@
 .vscode
 node_modules
+dist
 models
 sample
 core
-dist/core
+build/core
 demo.html
 demo.tsx
 server.ts

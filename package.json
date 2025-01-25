@@ -1,14 +1,15 @@
 {
   "name": "live2d-renderer",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "description": "An easy and simple to use Live2D model renderer in the browser.",
-  "main": "dist/live2dcubism.js",
-  "types": "dist/live2dcubism.d.ts",
+  "main": "build/live2dcubism.js",
+  "types": "build/live2dcubism.d.ts",
   "scripts": {
     "start": "npm run clean && webpack && node dist/server.js",
-    "build": "npm run clean && tsc && npm run clean-core",
+    "build": "npm run clean-build && tsc && npm run clean-core",
     "clean": "del-cli ./dist",
-    "clean-core": "del-cli ./dist/core"
+    "clean-build": "del-cli ./build",
+    "clean-core": "del-cli ./build/core"
   },
   "keywords": [
     "live2d",
@@ -66,10 +67,8 @@
     "webpack-copy-plugin": "^0.0.4",
     "webpack-node-externals": "^2.5.2"
   },
-  "optionalDependencies": {
-    "jszip": "^3.10.1"
-  },
   "dependencies": {
+    "jszip": "^3.10.1",
     "wav-file-decoder": "^1.0.3"
   }
 }

@@ -7,13 +7,13 @@ const CopyPlugin = require("copy-webpack-plugin")
 const webpack = require("webpack")
 const path = require("path")
 const Dotenv = require("dotenv-webpack")
-let exclude = [/node_modules/, /dist/]
-let webExclude = [...exclude, /server.tsx/, /routes/]
+let exclude = [/node_modules/, /dist/, /build/]
+let webExclude = [...exclude, /demo\/server.ts/]
 
 module.exports = [
   {
     target: "web",
-    entry: "./demo",
+    entry: "./demo/demo",
     mode: "production",
     node: {__dirname: false},
     output: {publicPath: "/", globalObject: "this", filename: "script.js", chunkFilename: "[id].js", path: path.resolve(__dirname, "./dist")},
@@ -34,14 +34,14 @@ module.exports = [
     },
     plugins: [
       new Dotenv(),
-      new ForkTsCheckerWebpackPlugin({typescript: {memoryLimit: 8192}}),
+      new ForkTsCheckerWebpackPlugin({typescript: {configFile: "./demo/tsconfig.json", memoryLimit: 8192}}),
       new webpack.HotModuleReplacementPlugin(),
       new MiniCssExtractPlugin({
         filename: "styles.css",
         chunkFilename: "[id].css"
       }),
       new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, "./demo.html"),
+        template: path.resolve(__dirname, "./demo/demo.html"),
         publicPath: "/",
         minify: false
       }),
@@ -60,7 +60,7 @@ module.exports = [
   }, 
   {
   target: "node",
-    entry: "./server",
+    entry: "./demo/server",
     mode: "production",
     node: {__dirname: false},
     externals: [nodeExternals()],
@@ -80,7 +80,7 @@ module.exports = [
     },
     plugins: [
       new Dotenv(),
-      new ForkTsCheckerWebpackPlugin(),
+      new ForkTsCheckerWebpackPlugin({typescript: {configFile: "./demo/tsconfig.json", memoryLimit: 8192}}),
       new webpack.HotModuleReplacementPlugin(),
       new MiniCssExtractPlugin({
         filename: "styles.css",

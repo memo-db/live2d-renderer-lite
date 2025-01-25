@@ -2,5 +2,6 @@ models
 core
 node_modules
 dist
+build
 sample
 .DS_Store

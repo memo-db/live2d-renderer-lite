@@ -761,7 +761,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
           this.pose.updateParameters(this.model, this.deltaTime)
         }
     
-        this.queueManager.doUpdateMotion(this.model, this.deltaTime)
         this.model.update()
         this.draw()
     }
@@ -787,6 +786,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
         const {motionGroups} = this.buffers
         const motionGroup = motionGroups.find((motion) => motion.group === group)
+        if (!motionGroup) return
         const {motionBuffers, wavBuffer} = motionGroup.motionData
 
         const name = `${group}_${i}`

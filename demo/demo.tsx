@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from "react"
 import ReactDOM from "react-dom"
 import {BrowserRouter as Router} from "react-router-dom"
-import {Live2DCubismModel} from "./live2dcubism"
+import {Live2DCubismModel} from "../live2dcubism"
 import "./demo.less"
 
 const App: React.FunctionComponent = (props) => {

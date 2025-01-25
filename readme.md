@@ -30,7 +30,7 @@ download the library [here](https://cubism.live2d.com/sdk-web/cubismcore/live2dc
 You should import the class `Live2DCubismModel` and initialize it with your own `HTMLCanvasElement`. Also make sure 
 that your canvas has a width and height set. From there, call the asynchronous `load` method with a path to either a 
 zip containing all the json files and textures, or the path to model3.json (and the other paths will be resolved relative 
-to it). To enable zip loading, you should install the optional dependency `jszip`. 
+to it).
 
 ```ts
 import {Live2DCubismModel} from "live2d-renderer"
