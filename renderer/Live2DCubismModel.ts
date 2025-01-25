@@ -320,11 +320,15 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             let totalMotionCount = 0
             for (let i = 0; i < this.settings.getMotionGroupCount(); i++) {
                 const group = this.settings.getMotionGroupName(i)
-                totalMotionCount += this.settings.getMotionCount(group)
+                let motionCount = 0
+                try {
+                    motionCount = this.settings.getMotionCount(group)
+                } catch {}
+                totalMotionCount += motionCount
     
                 let motionBuffers = [] as ArrayBuffer[]
                 let wavBuffer = null as ArrayBuffer | null
-                for (let i = 0; i < this.settings.getMotionCount(group); i++) {
+                for (let i = 0; i < motionCount; i++) {
                     const filename = this.settings.getMotionFileName(group, i)
                     const motionBuffer = files[filename]
                     if (!motionBuffer?.byteLength) return Promise.reject(`Failed to load ${filename}`)
@@ -414,11 +418,15 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             let totalMotionCount = 0
             for (let i = 0; i < settings.getMotionGroupCount(); i++) {
                 const group = settings.getMotionGroupName(i)
-                totalMotionCount += settings.getMotionCount(group)
+                let motionCount = 0
+                try {
+                    motionCount = this.settings.getMotionCount(group)
+                } catch {}
+                totalMotionCount += motionCount
     
                 let motionBuffers = [] as ArrayBuffer[]
                 let wavBuffer = null as ArrayBuffer | null
-                for (let i = 0; i < this.settings.getMotionCount(group); i++) {
+                for (let i = 0; i < motionCount; i++) {
                     const filename = this.settings.getMotionFileName(group, i)
                     const motionPath = path.join(basename, filename)
                     const motionBuffer = await fetch(motionPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
@@ -622,8 +630,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 this.canvas.height = this.canvas.width / ratio
             }
         } else {
-            this.canvas.width = this.canvas.width
-            this.canvas.height = this.canvas.height
+            this.canvas.width = this.canvas.clientWidth ? this.canvas.clientWidth : this.canvas.width
+            this.canvas.height = this.canvas.clientHeight ? this.canvas.clientHeight : this.canvas.height
         }
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
 
@@ -842,7 +850,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             const randGroup = Math.floor(Math.random() * this.settings.getMotionGroupCount())
             group = this.settings.getMotionGroupName(randGroup)
         }
-        const rand = Math.floor(Math.random() * this.settings.getMotionCount(group))
+        let motionCount = 0
+        try {
+            motionCount = this.settings.getMotionCount(group)
+        } catch {}
+        const rand = Math.floor(Math.random() * motionCount)
         return this.startMotion(group, rand, priority, onStartMotion, onEndMotion)
     }
 
