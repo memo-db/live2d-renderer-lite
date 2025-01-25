@@ -104,6 +104,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public enableMovement: boolean
     public enablePose: boolean
     public size: number
+    public loaded: boolean
 
     get enableZoom() {
         return this.cameraController.enableZoom
@@ -172,6 +173,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public constructor(canvas: HTMLCanvasElement, options?: Live2DModelOptions) {
         if (!options) options = {}
         super()
+        this.loaded = false
         this.motions = new csmMap<string, ACubismMotion>()
         this.expressions = new csmMap<string, ACubismMotion>()
         this.eyeBlinkIds = new csmVector<CubismIdHandle>()
@@ -227,6 +229,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.removeListeners()
         this.buffers = null
         this.canvas = null
+        this.loaded = false
     }
 
     public loadCubismCore = async () => {
@@ -243,7 +246,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     private loadBuffers = async (link: string) => {
-        if (!CubismFramework.isInitialized()) {
+        let initialized = false
+        try {
+            initialized = CubismFramework.isInitialized()
+        } catch {}
+        if (!initialized) {
             await this.loadCubismCore()
             CubismFramework.startUp({logFunction: (msg: string) => console.log(msg), loggingLevel: 5})
             CubismFramework.initialize()
@@ -274,7 +281,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             if (!modelBuffer?.byteLength) return Promise.reject(`Failed to load ${modelFilename}`)
 
             let expressionBuffers = [] as ArrayBuffer[]
-            for (let i = 0; i < this.settings.getExpressionCount(); i++) {
+            let expressionCount = 0
+            try {
+                expressionCount = this.settings.getExpressionCount()
+            } catch {}
+            for (let i = 0; i < expressionCount; i++) {
                 const filename = this.settings.getExpressionFileName(i)
                 const expressionBuffer = files[filename]
                 if (!expressionBuffer?.byteLength) return Promise.reject(`Failed to load ${filename}`)
@@ -296,7 +307,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             }
     
             let userDataBuffer = null as ArrayBuffer | null
-            const userDataFile = this.settings.getUserDataFile()
+            let userDataFile = ""
+            try {
+                userDataFile = this.settings.getUserDataFile()
+            } catch {}
             if (userDataFile) {
                 userDataBuffer = files[userDataFile]
                 if (!userDataBuffer?.byteLength) return Promise.reject(`Failed to load ${userDataFile}`)
@@ -357,7 +371,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             this.size = modelBuffer.byteLength
     
             let expressionBuffers = [] as ArrayBuffer[]
-            for (let i = 0; i < settings.getExpressionCount(); i++) {
+            let expressionCount = 0
+            try {
+                expressionCount = this.settings.getExpressionCount()
+            } catch {}
+            for (let i = 0; i < expressionCount; i++) {
                 const filename = settings.getExpressionFileName(i)
                 const expressionPath = path.join(basename, filename)
                 const expressionBuffer = await fetch(expressionPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
@@ -382,7 +400,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             }
     
             let userDataBuffer = null as ArrayBuffer | null
-            const userDataFile = settings.getUserDataFile()
+            let userDataFile = ""
+            try {
+                userDataFile = settings.getUserDataFile()
+            } catch {}
             if (userDataFile) {
                 const userDataPath = path.join(basename, userDataFile)
                 userDataBuffer = await fetch(userDataPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
@@ -525,6 +546,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.getRenderer().startUp(gl)
         await this.resize()
         this.animationLoop()
+        this.loaded = true
     }
 
     public loadTextures = async () => {
@@ -637,6 +659,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public draw = () => {
+        if (!this.loaded) return
         this.projection.multiplyByMatrix(this.modelMatrix)
         this.getRenderer().setMvpMatrix(this.projection)
         const gl = this.canvas.getContext("webgl2")
@@ -814,6 +837,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
     public startRandomMotion = async (group: string | null, priority: number, onStartMotion?: BeganMotionCallback, 
         onEndMotion?: FinishedMotionCallback): Promise<CubismMotionQueueEntryHandle> => {
+        if (!this.loaded) return
         if (!group) {
             const randGroup = Math.floor(Math.random() * this.settings.getMotionGroupCount())
             group = this.settings.getMotionGroupName(randGroup)
@@ -835,7 +859,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public hitTest = (areaName: string, x: number, y: number) => {
-        if (!this.settings) return
+        if (!this.loaded) return
         if (this.opacity < 1) return
         for (let i = 0; i < this.settings.getHitAreasCount(); i++) {
             if (this.settings.getHitAreaName(i) == areaName) {
