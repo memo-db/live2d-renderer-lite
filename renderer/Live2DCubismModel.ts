@@ -87,7 +87,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public autoInteraction: boolean
     public randomMotion: boolean
     public keepAspect: boolean
-    public paused: boolean
     public speed: number
     public logicalLeft: number
     public logicalRight: number
@@ -168,6 +167,15 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.y = y
     }
 
+    get paused() {
+        return this.paused
+    }
+
+    set paused(paused) {
+        this.paused = paused
+        this.animationLoop()
+    }
+
     public constructor(canvas: HTMLCanvasElement, options?: Live2DModelOptions) {
         if (!options) options = {}
         super()
@@ -181,15 +189,14 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.totalMotionCount = 0
         this.canvas = canvas
         this.needsResize = false
-        let officialScript = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"
-        this.cubismCorePath = options.cubismCorePath ?? officialScript
+        this.cubismCorePath = options.cubismCorePath ?? "live2dcubismcore.min.js"
         this.mocConsistency = options.checkMocConsistency ?? true
         this.premultipliedAlpha = options.premultipliedAlpha ?? true
         this.logicalLeft = options.logicalLeft ?? -2
         this.logicalRight = options.logicalRight ?? 2
         this.autoAnimate = options.autoAnimate ?? true
         this.autoInteraction = options.autoInteraction ?? true
-        this.keepAspect = options.keepAspect ?? true
+        this.keepAspect = options.keepAspect ?? false
         this.randomMotion = options.randomMotion ?? true
         this.paused = options.paused ?? false
         this.speed = options.speed ?? 1
@@ -654,7 +661,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public updateProjection = () => {
-        this.updateCamera()
         const gl = this.canvas.getContext("webgl2")
         const {width, height} = gl.canvas
         const projection = new CubismMatrix44()
@@ -760,6 +766,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
     
         this.model.update()
+        this.model.loadParameters()
         this.draw()
     }
 
@@ -768,6 +775,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         if (!this.autoAnimate) return
         const loop = async () => {
             if (this.paused) return window.cancelAnimationFrame(id)
+            this.updateCamera()
             await this.update()
             id = window.requestAnimationFrame(loop)
         }

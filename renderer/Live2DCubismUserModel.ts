@@ -223,7 +223,6 @@ export class Live2DCubismUserModel extends CubismUserModel {
 
     get width () {
         const model = this.model as any
-        console.log(model)
         return model._model.canvasinfo.CanvasWidth as number
     }
 

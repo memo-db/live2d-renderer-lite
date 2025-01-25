@@ -22,9 +22,8 @@ npm install live2d-renderer
 ### Live2D Cubism Core
 
 You need to install Live2D Cubism Core, a proprietary library for loading moc3 files. You must point 
-the option `cubismCorePath` to a link containing `live2dcubismcore.min.js` (or the unminified version). If nothing 
-is provided, it will default to the [official link](https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js) 
-but it's not recommended. 
+the option `cubismCorePath` to a link containing `live2dcubismcore.min.js` (or the unminified version). You can 
+download the library [here](https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js).
 
 ### Usage
 
@@ -60,9 +59,9 @@ export interface Live2DModelOptions {
     // Toggle whether you want it to play random motions, or just play the idle animation.
     randomMotion?: boolean = true
     // Resizes the aspect ratio of your canvas to match the model dimensions.
-    keepAspect?: boolean = true
+    keepAspect?: boolean = false
     // Link to the Cubism Core Library. It will be appended as a script tag if it isn't already.
-    cubismCorePath?: string = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"
+    cubismCorePath?: string = "live2dcubismcore.min.js"
     // Whether the animations are currently paused.
     paused?: boolean = false
     // The speed of the animation eg. 0.5 is half as fast.
