@@ -80,6 +80,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public currentFrame: DOMHighResTimeStamp
     public lastFrame: DOMHighResTimeStamp
     public shader: WebGLProgram
+    public paused: boolean
     public needsResize: boolean
     public premultipliedAlpha: boolean
     public cubismCorePath: string
@@ -165,15 +166,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
     set y(y) {
         this.cameraController.y = y
-    }
-
-    get paused() {
-        return this.paused
-    }
-
-    set paused(paused) {
-        this.paused = paused
-        this.animationLoop()
     }
 
     public constructor(canvas: HTMLCanvasElement, options?: Live2DModelOptions) {
@@ -678,6 +670,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public update = async () => {
+        if (this.paused) return
         const gl = this.canvas.getContext("webgl2")
         if (gl.isContextLost()) return
 
@@ -774,7 +767,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.update()
         if (!this.autoAnimate) return
         const loop = async () => {
-            if (this.paused) return window.cancelAnimationFrame(id)
             this.updateCamera()
             await this.update()
             id = window.requestAnimationFrame(loop)
