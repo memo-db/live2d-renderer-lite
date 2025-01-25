@@ -144,6 +144,30 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.zoomStep = zoomStep
     }
 
+    get scale() {
+        return this.cameraController.scale
+    }
+
+    set scale(scale) {
+        this.cameraController.scale = scale
+    }
+
+    get x() {
+        return this.cameraController.x
+    }
+
+    set x(x) {
+        this.cameraController.x = x
+    }
+
+    get y() {
+        return this.cameraController.y
+    }
+
+    set y(y) {
+        this.cameraController.y = y
+    }
+
     public constructor(canvas: HTMLCanvasElement, options?: Live2DModelOptions) {
         if (!options) options = {}
         super()
