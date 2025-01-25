@@ -1,4 +1,11 @@
-<img src="assets/live2dlogo.png">
+<div align="left">
+  <p>
+    <img src="https://raw.githubusercontent.com/Moebits/live2d-renderer/master/assets/live2dlogo.png" width="700" />
+  </p>
+  <p>
+    <a href="https://nodei.co/npm/live2d-renderer/"><img src="https://nodei.co/npm/live2d-renderer.png" /></a>
+  </p>
+</div>
 
 The Live2D Cubism SDK can be complex, and this project aims to do all the heavy lifting for you so you only have to 
 worry about loading and interacting with your models. We support loading Live2D Cubism 5 models (which should also be 
@@ -173,5 +180,5 @@ model.lipSyncIds
 
 ### Licenses
 
-sLive2D Web Framework is licensed under the [Live2D Open Software License](https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html) \
+Live2D Web Framework is licensed under the [Live2D Open Software License](https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html) \
 Live2D Cubism Core is licensed under the [Live2D Proprietary Software License](https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html)
