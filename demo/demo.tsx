@@ -9,7 +9,7 @@ const App: React.FunctionComponent = (props) => {
 
     const load = async () => {
         const model = new Live2DCubismModel(rendererRef.current!, {autoAnimate: true})
-        await model.load("models/Hiyori.zip")
+        await model.load("models/Sigewinne.zip")
         console.log({width: model.width, height: model.height, size: model.size})
         const screenshot = await model.takeScreenshot()
         console.log(screenshot)

@@ -246,11 +246,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     private loadBuffers = async (link: string) => {
-        let initialized = false
-        try {
-            initialized = CubismFramework.isInitialized()
-        } catch {}
-        if (!initialized) {
+        if (!this.initialized) {
             await this.loadCubismCore()
             CubismFramework.startUp({logFunction: (msg: string) => console.log(msg), loggingLevel: 5})
             CubismFramework.initialize()
