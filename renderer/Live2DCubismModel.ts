@@ -194,7 +194,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.randomMotion = options.randomMotion ?? true
         this.paused = options.paused ?? false
         this.speed = options.speed ?? 1
-        this.updateTime()
         this.shader = this.createShader()
         this.wavController = new WavFileController()
         this.touchController = new TouchController()
@@ -213,6 +212,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.enableExpression = options.enableExpression ?? true
         this.enableMovement = options.enableMovement ?? true
         this.enablePose = options.enablePose ?? true
+        this.updateTime()
         this.startPointerInteractions()
     }
 
@@ -600,8 +600,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 this.canvas.height = this.canvas.width / ratio
             }
         } else {
-            this.canvas.width = this.canvas.clientWidth
-            this.canvas.height = this.canvas.clientHeight
+            this.canvas.width = this.canvas.width
+            this.canvas.height = this.canvas.height
         }
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
 
