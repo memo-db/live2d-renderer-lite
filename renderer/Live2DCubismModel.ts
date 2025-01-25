@@ -235,8 +235,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cubismLoaded = false
     }
 
-    public loadCubismCore = async () => {
-        return new Promise<void>(async (resolve) => {
+    public initializeCubism = async () => {
+        await new Promise<void>(async (resolve) => {
             if (document.querySelector(`script[src="${this.cubismCorePath}"]`)) {
                 return resolve()
             }
@@ -246,13 +246,13 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             document.body.appendChild(script)
             script.onload = () => resolve()
         })
+        CubismFramework.startUp({logFunction: (msg: string) => console.log(msg), loggingLevel: 5})
+        CubismFramework.initialize()
     }
 
-    private loadBuffers = async (link: string) => {
+    public loadBuffers = async (link: string) => {
         if (!this.cubismLoaded) {
-            await this.loadCubismCore()
-            CubismFramework.startUp({logFunction: (msg: string) => console.log(msg), loggingLevel: 5})
-            CubismFramework.initialize()
+            await this.initializeCubism()
             this.cubismLoaded = true
         }
         if (path.extname(link).replace(".", "") === "zip") {
@@ -529,11 +529,12 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.breath = CubismBreath.create()
         const breathParameters = new csmVector<BreathParameterData>()
 
-        const paramAngleX = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamAngleX)
-        const paramAngleY = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamAngleY)
-        const paramAngleZ = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamAngleZ)
-        const paramBodyAngleX = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamBodyAngleX)
-        const paramBreath = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamBreath)
+        const manager = CubismFramework.getIdManager?.()
+        const paramAngleX = manager?.getId(CubismDefaultParameterId.ParamAngleX)
+        const paramAngleY = manager?.getId(CubismDefaultParameterId.ParamAngleY)
+        const paramAngleZ = manager?.getId(CubismDefaultParameterId.ParamAngleZ)
+        const paramBodyAngleX = manager?.getId(CubismDefaultParameterId.ParamBodyAngleX)
+        const paramBreath = manager?.getId(CubismDefaultParameterId.ParamBreath)
         breathParameters.pushBack(new BreathParameterData(paramAngleX, 0.0, 15.0, 6.5345, 0.5))
         breathParameters.pushBack(new BreathParameterData(paramAngleY, 0.0, 8.0, 3.5345, 0.5))
         breathParameters.pushBack(new BreathParameterData(paramAngleZ, 0.0, 10.0, 5.5345, 0.5))
@@ -584,11 +585,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
         this.createRenderer()
         await this.loadTextures()
+        this.loaded = true
         const gl = this.canvas.getContext("webgl2")
         this.getRenderer().startUp(gl)
         await this.resize()
         this.animationLoop()
-        this.loaded = true
     }
 
     public loadTextures = async () => {
@@ -789,17 +790,19 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             this.expressionManager.updateMotion(this.model, this.deltaTime)
         }
 
+
         if (this.enableMovement) {
-            const paramAngleX = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamAngleX)
-            const paramAngleY = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamAngleY)
-            const paramAngleZ = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamAngleZ)
-            const paramBodyAngleX = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamBodyAngleX)
+            const manager = CubismFramework.getIdManager?.()
+            const paramAngleX = manager?.getId(CubismDefaultParameterId.ParamAngleX)
+            const paramAngleY = manager?.getId(CubismDefaultParameterId.ParamAngleY)
+            const paramAngleZ = manager?.getId(CubismDefaultParameterId.ParamAngleZ)
+            const paramBodyAngleX = manager?.getId(CubismDefaultParameterId.ParamBodyAngleX)
             this.model.addParameterValueById(paramAngleX, this.dragX * 30)
             this.model.addParameterValueById(paramAngleY, this.dragY * 30)
             this.model.addParameterValueById(paramAngleZ, this.dragX * this._dragY * -30)
             this.model.addParameterValueById(paramBodyAngleX, this._dragX * 10)
-            const paramEyeBallX = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamEyeBallX)
-            const paramEyeBallY = CubismFramework.getIdManager()?.getId(CubismDefaultParameterId.ParamEyeBallY)
+            const paramEyeBallX = manager?.getId(CubismDefaultParameterId.ParamEyeBallX)
+            const paramEyeBallY = manager?.getId(CubismDefaultParameterId.ParamEyeBallY)
             this.model.addParameterValueById(paramEyeBallX, this.dragX)
             this.model.addParameterValueById(paramEyeBallY, this.dragY)
         }
