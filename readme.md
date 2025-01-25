@@ -129,13 +129,13 @@ const parts = model.parts
 const drawables = model.drawables
 
 // Get parameter value
-model.getParameterValue("ParamX")
+model.getParameterValue(1)
 // Set parameters
-model.setParameter("ParamX", 30)
+model.setParameter(1, 30)
 // Get part opacity
-model.getPartOpacity("Head")
+model.getPartOpacity(1)
 // Set part opacity
-model.setPartOpacity("Head", 0.5)
+model.setPartOpacity(1, 0.5)
 ```
 
 ### Motions and Expressions

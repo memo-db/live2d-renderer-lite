@@ -188,12 +188,12 @@ export class Live2DCubismUserModel extends CubismUserModel {
         opacities: Float32Array, types: Int32Array, values: Float32Array}
     }
 
-    public getParameterValue = (id: string) => {
-        return this.model.getParameterValueById(id as any)
+    public getParameterValue = (index: number) => {
+        return this.model.getParameterValueByIndex(index)
     }
 
-    public setParameter = (id: string, value: number) => {
-        this.model.setParameterValueById(id as any, value)
+    public setParameter = (index: number, value: number) => {
+        this.model.setParameterValueByIndex(index, value)
         this.model.update()
     }
 
@@ -203,12 +203,12 @@ export class Live2DCubismUserModel extends CubismUserModel {
         opacities: Float32Array, parentIndices: Float32Array}
     }
 
-    public getPartOpacity = (id: string) => {
-        return this.model.getPartOpacityById(id as any)
+    public getPartOpacity = (index: number) => {
+        return this.model.getPartOpacityByIndex(index)
     }
 
-    public setPartOpacity = (id: string, opacity: number) => {
-        this.model.setPartOpacityById(id as any, opacity)
+    public setPartOpacity = (index: number, opacity: number) => {
+        this.model.setPartOpacityByIndex(index, opacity)
         this.model.update()
     }
 
