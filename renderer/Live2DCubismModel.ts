@@ -235,8 +235,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cubismLoaded = false
     }
 
-    public initializeCubism = async () => {
-        await new Promise<void>(async (resolve) => {
+    public loadCubismCore = async () => {
+        await new Promise<void>(async (resolve, reject) => {
             if (document.querySelector(`script[src="${this.cubismCorePath}"]`)) {
                 return resolve()
             }
@@ -245,16 +245,22 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             script.defer = true
             document.body.appendChild(script)
             script.onload = () => resolve()
+            script.onerror = (err) => reject(err)
         })
+    }
+
+    public loadFramework = async () => {
         CubismFramework.startUp({logFunction: (msg: string) => console.log(msg), loggingLevel: 5})
         CubismFramework.initialize()
     }
 
+    public initializeCubism = async () => {
+        await this.loadCubismCore().catch(() => null)
+        await this.loadFramework().catch(() => null)
+        this.cubismLoaded = true
+    }
+
     public loadBuffers = async (link: string) => {
-        if (!this.cubismLoaded) {
-            await this.initializeCubism()
-            this.cubismLoaded = true
-        }
         if (path.extname(link).replace(".", "") === "zip") {
             const JSZip = await import("jszip").then((r) => r.default)
             const zipBuffer = await fetch(link).then((r) => r.arrayBuffer())
@@ -497,6 +503,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public load = async (link: string) => {
+        if (!this.cubismLoaded) await this.initializeCubism()
         const {modelBuffer, expressionBuffers, physicsBuffer, 
         poseBuffer, userDataBuffer, motionGroups} = await this.loadBuffers(link)
 
@@ -529,17 +536,17 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.breath = CubismBreath.create()
         const breathParameters = new csmVector<BreathParameterData>()
 
-        const manager = CubismFramework.getIdManager?.()
+        const manager = CubismFramework?.getIdManager?.()
         const paramAngleX = manager?.getId(CubismDefaultParameterId.ParamAngleX)
         const paramAngleY = manager?.getId(CubismDefaultParameterId.ParamAngleY)
         const paramAngleZ = manager?.getId(CubismDefaultParameterId.ParamAngleZ)
         const paramBodyAngleX = manager?.getId(CubismDefaultParameterId.ParamBodyAngleX)
         const paramBreath = manager?.getId(CubismDefaultParameterId.ParamBreath)
-        breathParameters.pushBack(new BreathParameterData(paramAngleX, 0.0, 15.0, 6.5345, 0.5))
-        breathParameters.pushBack(new BreathParameterData(paramAngleY, 0.0, 8.0, 3.5345, 0.5))
-        breathParameters.pushBack(new BreathParameterData(paramAngleZ, 0.0, 10.0, 5.5345, 0.5))
-        breathParameters.pushBack(new BreathParameterData(paramBodyAngleX, 0.0, 4.0, 15.5345, 0.5))
-        breathParameters.pushBack(new BreathParameterData(paramBreath, 0.5, 0.5, 3.2345, 1))
+        if (paramAngleX) breathParameters.pushBack(new BreathParameterData(paramAngleX, 0.0, 15.0, 6.5345, 0.5))
+        if (paramAngleY) breathParameters.pushBack(new BreathParameterData(paramAngleY, 0.0, 8.0, 3.5345, 0.5))
+        if (paramAngleZ) breathParameters.pushBack(new BreathParameterData(paramAngleZ, 0.0, 10.0, 5.5345, 0.5))
+        if (paramBodyAngleX) breathParameters.pushBack(new BreathParameterData(paramBodyAngleX, 0.0, 4.0, 15.5345, 0.5))
+        if (paramBreath) breathParameters.pushBack(new BreathParameterData(paramBreath, 0.5, 0.5, 3.2345, 1))
         this.breath.setParameters(breathParameters)
 
         if (userDataBuffer) {
@@ -797,14 +804,14 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             const paramAngleY = manager?.getId(CubismDefaultParameterId.ParamAngleY)
             const paramAngleZ = manager?.getId(CubismDefaultParameterId.ParamAngleZ)
             const paramBodyAngleX = manager?.getId(CubismDefaultParameterId.ParamBodyAngleX)
-            this.model.addParameterValueById(paramAngleX, this.dragX * 30)
-            this.model.addParameterValueById(paramAngleY, this.dragY * 30)
-            this.model.addParameterValueById(paramAngleZ, this.dragX * this._dragY * -30)
-            this.model.addParameterValueById(paramBodyAngleX, this._dragX * 10)
             const paramEyeBallX = manager?.getId(CubismDefaultParameterId.ParamEyeBallX)
             const paramEyeBallY = manager?.getId(CubismDefaultParameterId.ParamEyeBallY)
-            this.model.addParameterValueById(paramEyeBallX, this.dragX)
-            this.model.addParameterValueById(paramEyeBallY, this.dragY)
+            if (paramAngleX) this.model.addParameterValueById(paramAngleX, this.dragX * 30)
+            if (paramAngleY) this.model.addParameterValueById(paramAngleY, this.dragY * 30)
+            if (paramAngleZ) this.model.addParameterValueById(paramAngleZ, this.dragX * this._dragY * -30)
+            if (paramBodyAngleX) this.model.addParameterValueById(paramBodyAngleX, this._dragX * 10)
+            if (paramEyeBallX) this.model.addParameterValueById(paramEyeBallX, this.dragX)
+            if (paramEyeBallY) this.model.addParameterValueById(paramEyeBallY, this.dragY)
         }
 
         if (this.breath !== null && this.enableBreath) {
