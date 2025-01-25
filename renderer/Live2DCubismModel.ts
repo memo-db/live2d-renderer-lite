@@ -5,7 +5,7 @@ import {ACubismMotion, FinishedMotionCallback, BeganMotionCallback} from "../fra
 import {CubismEyeBlink} from "../framework/src/effect/cubismeyeblink"
 import {CubismIdHandle} from "../framework/src/id/cubismid"
 import {CubismBreath, BreathParameterData} from "../framework/src/effect/cubismbreath"
-import {CubismMotionQueueEntryHandle, InvalidMotionQueueEntryHandleValue} from "../framework/src/motion/cubismmotionqueuemanager"
+import {CubismMotionQueueManager, CubismMotionQueueEntryHandle, InvalidMotionQueueEntryHandleValue} from "../framework/src/motion/cubismmotionqueuemanager"
 import {CubismFramework} from "../framework/src/live2dcubismframework"
 import {CubismViewMatrix} from "../framework/src/math/cubismviewmatrix"
 import {CubismMatrix44} from "../framework/src/math/cubismmatrix44"
@@ -79,6 +79,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public deltaTime: DOMHighResTimeStamp
     public currentFrame: DOMHighResTimeStamp
     public lastFrame: DOMHighResTimeStamp
+    public queueManager: CubismMotionQueueManager
     public shader: WebGLProgram
     public paused: boolean
     public needsResize: boolean
@@ -178,6 +179,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.viewMatrix = new CubismViewMatrix()
         this.projection = new CubismMatrix44()
         this.deviceToScreen = new CubismMatrix44()
+        this.queueManager = new CubismMotionQueueManager()
         this.totalMotionCount = 0
         this.canvas = canvas
         this.needsResize = false
@@ -710,6 +712,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 motionUpdated = this.motionManager.updateMotion(this.model, this.deltaTime)
             }
             this.model.saveParameters()
+            
         }
 
         if (!motionUpdated) {
@@ -758,8 +761,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
           this.pose.updateParameters(this.model, this.deltaTime)
         }
     
+        this.queueManager.doUpdateMotion(this.model, this.deltaTime)
         this.model.update()
-        this.model.loadParameters()
         this.draw()
     }
 
@@ -848,6 +851,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public pointerDown = (event: PointerEvent) => {
+        if (this.paused) return
         const rect = this.canvas.getBoundingClientRect()
         const posX = event.clientX - rect.left
         const posY = event.clientY - rect.top
@@ -855,6 +859,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public pointerMove = (event: PointerEvent) => {
+        if (this.paused) return
         const rect = this.canvas.getBoundingClientRect()
         const posX = event.clientX - rect.left
         const posY = event.clientY - rect.top
@@ -867,6 +872,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public pointerUp = (event: PointerEvent) => {
+        if (this.paused) return
         const rect = this.canvas.getBoundingClientRect()
         const posX = event.clientX - rect.left
         const posY = event.clientY - rect.top
