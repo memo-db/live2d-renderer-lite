@@ -1,0 +1,91 @@
+export class CameraController {
+    public canvas: HTMLCanvasElement
+    public x: number
+    public y: number
+    public scale: number
+    public minScale: number
+    public maxScale: number
+    public zoomStep: number
+    public panSpeed: number
+    public isPanning: boolean
+    public lastPosition: {x: number, y: number}
+    public enableZoom: boolean
+    public enablePan: boolean
+
+    constructor(canvas: HTMLCanvasElement) {
+        this.canvas = canvas
+        this.x = 0
+        this.y = 0
+        this.scale = 1
+        this.minScale = 0.1
+        this.maxScale = 10
+        this.isPanning = false
+        this.lastPosition = {x: 0, y: 0}
+        this.zoomStep = 0.005
+        this.panSpeed = 1.5
+        this.addListeners()
+    }
+
+    public handleMouseDown = (event: MouseEvent) => {
+        if (!this.enablePan) return
+        this.isPanning = true
+        this.lastPosition = {x: event.clientX, y: event.clientY}
+    }
+
+    public handleMouseMove = (event: MouseEvent) => {
+        if (!this.enablePan) return
+        if (this.isPanning) {
+            const dx = event.clientX - this.lastPosition.x
+            const dy = event.clientY - this.lastPosition.y
+
+            this.x -= dx * this.panSpeed / this.canvas.width
+            this.y += dy * this.panSpeed / this.canvas.height
+
+            this.lastPosition = {x: event.clientX, y: event.clientY}
+        }
+    }
+
+    public handleMouseUp = () => {
+        if (!this.enablePan) return
+        this.isPanning = false
+    }
+
+    public handleWheel = (event: WheelEvent) => {
+        if (!this.enableZoom) return
+        event.preventDefault()
+        const delta = event.deltaY
+        const scaleFactor = Math.pow(2, -delta * this.zoomStep)
+        this.scale *= scaleFactor
+        this.scale = Math.max(this.minScale, Math.min(this.maxScale, this.scale))
+    }
+
+    public handleDoubleClick = () => {
+        if (this.enablePan) {
+            this.x = 0
+            this.y = 0
+            this.isPanning = false
+            this.lastPosition = {x: 0, y: 0}
+        }
+        if (this.enableZoom) {
+            this.scale = 1
+        }
+    }
+
+    public addListeners = () => {
+        this.canvas.addEventListener("wheel", this.handleWheel)
+        this.canvas.addEventListener("mousedown", this.handleMouseDown)
+        window.addEventListener("mousemove", this.handleMouseMove)
+        window.addEventListener("mouseup", this.handleMouseUp)
+        this.canvas.addEventListener("dblclick", this.handleDoubleClick)
+        this.canvas.addEventListener("contextmenu", (event) => event.preventDefault())
+    }
+
+    public removeListeners = () => {
+        this.canvas.removeEventListener("wheel", this.handleWheel)
+        this.canvas.removeEventListener("mousedown", this.handleMouseDown)
+        window.removeEventListener("mousemove", this.handleMouseMove)
+        window.removeEventListener("mouseup", this.handleMouseUp)
+        this.canvas.removeEventListener("dblclick", this.handleDoubleClick)
+        this.canvas.removeEventListener("contextmenu", (event) => event.preventDefault())
+    }
+}
