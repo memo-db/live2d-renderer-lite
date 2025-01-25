@@ -8,7 +8,7 @@ const App: React.FunctionComponent = (props) => {
     const rendererRef = useRef<HTMLCanvasElement>(null)
 
     const load = async () => {
-        const model = new Live2DCubismModel(rendererRef.current!, {keepAspect: false})
+        const model = new Live2DCubismModel(rendererRef.current!, {autoAnimate: true})
         await model.load("models/Hiyori.zip")
     }
 

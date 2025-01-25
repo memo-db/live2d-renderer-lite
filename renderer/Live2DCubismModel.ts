@@ -704,9 +704,9 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             this.model.loadParameters()
             if (this.motionManager.isFinished()) {
                 if (this.randomMotion) {
-                    this.startRandomMotion(null, MotionPriority.None)
+                    this.startRandomMotion(null, MotionPriority.Idle)
                 } else {
-                    this.startMotion("Idle", 1, MotionPriority.None)
+                    this.startMotion("Idle", 1, MotionPriority.Idle)
                 }
             } else {
                 motionUpdated = this.motionManager.updateMotion(this.model, this.deltaTime)
@@ -836,6 +836,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public hitTest = (areaName: string, x: number, y: number) => {
+        if (!this.settings) return
         if (this.opacity < 1) return
         for (let i = 0; i < this.settings.getHitAreasCount(); i++) {
             if (this.settings.getHitAreaName(i) == areaName) {
