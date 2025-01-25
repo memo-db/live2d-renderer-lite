@@ -293,14 +293,20 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             }
 
             let physicsBuffer = null as ArrayBuffer | null
-            const physicsFilename = this.settings.getPhysicsFileName()
+            let physicsFilename = ""
+            try {
+                physicsFilename = this.settings.getPhysicsFileName()
+            } catch {}
             if (physicsFilename) {
                 physicsBuffer = files[physicsFilename]
                 if (!physicsBuffer?.byteLength) return Promise.reject(`Failed to load ${physicsFilename}`)
             }
     
             let poseBuffer = null as ArrayBuffer | null
-            const poseFilename = this.settings.getPoseFileName()
+            let poseFilename = ""
+            try {
+                poseFilename = this.settings.getPoseFileName()
+            } catch {}
             if (poseFilename) {
                 poseBuffer = files[poseFilename]
                 if (!poseBuffer?.byteLength) return Promise.reject(`Failed to load ${poseFilename}`)
@@ -318,7 +324,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
             let motionGroups = [] as {group: string, motionData: {motionBuffers: ArrayBuffer[], wavBuffer: ArrayBuffer | null}}[]
             let totalMotionCount = 0
-            for (let i = 0; i < this.settings.getMotionGroupCount(); i++) {
+            let motionGroupCount = 0
+            try {
+                motionGroupCount = this.settings.getMotionGroupCount()
+            } catch {}
+            for (let i = 0; i < motionGroupCount; i++) {
                 const group = this.settings.getMotionGroupName(i)
                 let motionCount = 0
                 try {
@@ -334,7 +344,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                     if (!motionBuffer?.byteLength) return Promise.reject(`Failed to load ${filename}`)
                     motionBuffers.push(motionBuffer)
 
-                    const voice = this.settings.getMotionSoundFileName(group, i)
+                    let voice = ""
+                    try {
+                        voice = this.settings.getMotionSoundFileName(group, i)
+                    } catch {}
                     if (voice.localeCompare("") !== 0) {
                         wavBuffer = files[voice]
                     }
@@ -344,7 +357,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             this.totalMotionCount = totalMotionCount
 
             const textureImages = [] as HTMLImageElement[]
-            for (let i = 0; i < this.settings.getTextureCount(); i++) {
+            let textureCount = 0
+            try {
+                textureCount = this.settings.getTextureCount()
+            } catch {}
+            for (let i = 0; i < textureCount; i++) {
                 const filename = this.settings.getTextureFileName(i)
 
                 const imageArrayBuffer = files[filename]
@@ -388,7 +405,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             }
     
             let physicsBuffer = null as ArrayBuffer | null
-            const physicsFilename = settings.getPhysicsFileName()
+            let physicsFilename = ""
+            try {
+                physicsFilename = settings.getPhysicsFileName()
+            } catch {}
             if (physicsFilename) {
                 const physicsPath = path.join(basename, physicsFilename)
                 physicsBuffer = await fetch(physicsPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
@@ -396,7 +416,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             }
     
             let poseBuffer = null as ArrayBuffer | null
-            const poseFilename = settings.getPoseFileName()
+            let poseFilename = ""
+            try {
+                poseFilename = settings.getPoseFileName()
+            } catch {}
             if (poseFilename) {
                 const posePath = path.join(basename, poseFilename)
                 poseBuffer = await fetch(posePath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
@@ -416,7 +439,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     
             let motionGroups = [] as {group: string, motionData: {motionBuffers: ArrayBuffer[], wavBuffer: ArrayBuffer | null}}[]
             let totalMotionCount = 0
-            for (let i = 0; i < settings.getMotionGroupCount(); i++) {
+            let motionGroupCount = 0
+            try {
+                motionGroupCount = settings.getMotionGroupCount()
+            } catch {}
+            for (let i = 0; i < motionGroupCount; i++) {
                 const group = settings.getMotionGroupName(i)
                 let motionCount = 0
                 try {
@@ -433,7 +460,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                     if (!motionBuffer.byteLength) return Promise.reject(`Failed to load ${motionPath}`)
                     motionBuffers.push(motionBuffer)
 
-                    const voice = this.settings.getMotionSoundFileName(group, i)
+                    let voice = ""
+                    try {
+                        voice = this.settings.getMotionSoundFileName(group, i)
+                    } catch {}
                     if (voice.localeCompare("") !== 0) {
                         const wavPath = path.join(basename, voice)
                         wavBuffer = await fetch(wavPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
@@ -445,7 +475,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             this.totalMotionCount = totalMotionCount
     
             const textureImages = [] as HTMLImageElement[]
-            for (let i = 0; i < settings.getTextureCount(); i++) {
+            let textureCount = 0
+            try {
+                textureCount = settings.getTextureCount()
+            } catch {}
+            for (let i = 0; i < textureCount; i++) {
                 const filename = this.settings.getTextureFileName(i)
                 const texturePath = path.join(basename, filename)
     
