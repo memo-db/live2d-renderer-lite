@@ -1,5 +1,3 @@
-import {decodeWavFile} from "wav-file-decoder"
-
 export class WavFileController {
     private samples: Float32Array[] | null
     private lastRms: number
@@ -21,7 +19,8 @@ export class WavFileController {
         this.sampleOffset = 0
         this.userTime = 0
         this.lastRms = 0
-        const wav = decodeWavFile(wavBuffer)
+        const wavDecoder = await import("wav-file-decoder")
+        const wav = wavDecoder.decodeWavFile(wavBuffer)
         this.numChannels = wav.numberOfChannels
         this.bitsPerSample = wav.bitsPerSample
         this.sampleRate = wav.sampleRate
