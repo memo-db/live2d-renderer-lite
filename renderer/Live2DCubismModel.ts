@@ -103,6 +103,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public enableExpression: boolean
     public enableMovement: boolean
     public enablePose: boolean
+    public size: number
     public init: boolean
 
     get enableZoom() {
@@ -255,6 +256,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             const JSZip = await import("jszip").then((r) => r.default)
             const zipBuffer = await fetch(link).then((r) => r.arrayBuffer())
             const zip  = await JSZip.loadAsync(zipBuffer)
+            this.size = zipBuffer.byteLength
 
             let files = {} as {[key: string]: ArrayBuffer}
             for (let i = 0; i < Object.keys(zip.files).length; i++) {
@@ -356,6 +358,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             const modelPath = path.join(basename, modelFilename)
             const modelBuffer = await fetch(modelPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
             if (!modelBuffer.byteLength) return Promise.reject(`Failed to load ${modelPath}`)
+            this.size = modelBuffer.byteLength
     
             let expressionBuffers = [] as ArrayBuffer[]
             for (let i = 0; i < settings.getExpressionCount(); i++) {
@@ -910,5 +913,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         document.removeEventListener("pointermove", this.pointerMove)
         document.removeEventListener("pointerup", this.pointerUp)
         document.removeEventListener("pointercancel", this.pointerUp)
+    }
+
+    public takeScreenshot = async (format: string = "png") => {
+        await this.update()
+        return this.canvas.toDataURL(`image/${format}`)
     }
 }

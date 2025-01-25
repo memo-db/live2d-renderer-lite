@@ -8,8 +8,11 @@ const App: React.FunctionComponent = (props) => {
     const rendererRef = useRef<HTMLCanvasElement>(null)
 
     const load = async () => {
-        const model = new Live2DCubismModel(rendererRef.current!, {autoAnimate: true})
+        const model = new Live2DCubismModel(rendererRef.current!, {autoAnimate: false})
         await model.load("models/Hiyori.zip")
+        console.log({width: model.width, height: model.height, size: model.size})
+        const screenshot = await model.takeScreenshot()
+        console.log(screenshot)
     }
 
     useEffect(()=> {

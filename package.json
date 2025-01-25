@@ -1,6 +1,6 @@
 {
   "name": "live2d-renderer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An easy and simple to use Live2D model renderer in the browser.",
   "main": "build/live2dcubism.js",
   "types": "build/live2dcubism.d.ts",
@@ -13,6 +13,7 @@
   },
   "keywords": [
     "live2d",
+    "cubism",
     "model",
     "renderer",
     "animation"
