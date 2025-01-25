@@ -105,6 +105,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public enablePose: boolean
     public size: number
     public loaded: boolean
+    public cubismLoaded: boolean
 
     get enableZoom() {
         return this.cameraController.enableZoom
@@ -173,6 +174,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public constructor(canvas: HTMLCanvasElement, options?: Live2DModelOptions) {
         if (!options) options = {}
         super()
+        this.cubismLoaded = false
         this.loaded = false
         this.motions = new csmMap<string, ACubismMotion>()
         this.expressions = new csmMap<string, ACubismMotion>()
@@ -230,6 +232,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.buffers = null
         this.canvas = null
         this.loaded = false
+        this.cubismLoaded = false
     }
 
     public loadCubismCore = async () => {
@@ -246,10 +249,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     private loadBuffers = async (link: string) => {
-        if (!this.initialized) {
+        if (!this.cubismLoaded) {
             await this.loadCubismCore()
             CubismFramework.startUp({logFunction: (msg: string) => console.log(msg), loggingLevel: 5})
             CubismFramework.initialize()
+            this.cubismLoaded = true
         }
         if (path.extname(link).replace(".", "") === "zip") {
             const JSZip = await import("jszip").then((r) => r.default)
