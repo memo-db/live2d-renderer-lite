@@ -22,7 +22,8 @@ app.get("/*", function(req, res, next) {
 })
 
 const run = async () => {
-  app.listen(process.env.PORT || 8090, () => console.log("Started the website server!"))
+  let port = process.env.PORT || 8090
+  app.listen(port, () => console.log(`Started the webserver at http://localhost:${port}`))
 }
 
 run()

@@ -200,7 +200,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.speed = options.speed ?? 1
         this.shader = this.createShader()
         this.wavController = new WavFileController()
-        this.touchController = new TouchController()
+        this.touchController = new TouchController(this)
         this.cameraController = new CameraController(this.canvas)
         this.cameraController.enableZoom = options.enableZoom ?? true
         this.cameraController.enablePan = options.enablePan ?? true
@@ -217,7 +217,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.enableMovement = options.enableMovement ?? true
         this.enablePose = options.enablePose ?? true
         this.updateTime()
-        this.startPointerInteractions()
     }
 
     public destroy = () => {
@@ -227,7 +226,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.eyeBlinkIds.clear()
         this.lipSyncIds.clear()
         CubismFramework.dispose()
-        this.cancelPointerInteractions()
+        this.touchController.cancelInteractions()
         this.cameraController.removeListeners()
         this.buffers = null
         this.canvas = null
@@ -242,7 +241,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             }
             const script = document.createElement("script")
             script.src = this.cubismCorePath
-            script.defer = true
             document.body.appendChild(script)
             script.onload = () => resolve()
             script.onerror = (err) => reject(err)
@@ -261,246 +259,92 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public loadBuffers = async (link: string) => {
-        if (path.extname(link).replace(".", "") === "zip") {
-            const JSZip = await import("jszip").then((r) => r.default)
-            const zipBuffer = await fetch(link).then((r) => r.arrayBuffer())
-            const zip  = await JSZip.loadAsync(zipBuffer)
+        const isZip = path.extname(link).replace(".", "") === "zip"
+        let files = {} as {[key: string]: ArrayBuffer}
+        let basename = path.dirname(link)
+    
+        if (isZip) {
+            const JSZip = await import("jszip").then(r => r.default)
+            const zipBuffer = await fetch(link).then(r => r.arrayBuffer())
+            const zip = await JSZip.loadAsync(zipBuffer)
             this.size = zipBuffer.byteLength
-
-            let files = {} as {[key: string]: ArrayBuffer}
-            for (let i = 0; i < Object.keys(zip.files).length; i++) {
-                const relativePath = Object.keys(zip.files)[i]
-                if (relativePath.startsWith("__MACOSX")) continue
-                const file = Object.values(zip.files)[i]
-                let contents = null
-                if (!file.dir) contents = await file.async("arraybuffer")
+    
+            for (const [relativePath, file] of Object.entries(zip.files)) {
+                if (relativePath.startsWith("__MACOSX") || file.dir) continue
                 const key = relativePath.split("/").slice(1).join("/")
+                const contents = await file.async("arraybuffer")
                 files[key] = contents
-                if (relativePath.endsWith("model3.json")) {
-                    const settings = new CubismModelSettingJson(contents, contents.byteLength)
-                    this.settings = settings
-                }
+                if (key.endsWith("model3.json")) this.settings = new CubismModelSettingJson(contents, contents.byteLength)
             }
-
-            const modelFilename = this.settings.getModelFileName()
-            const modelBuffer = files[modelFilename]
-            if (!modelBuffer?.byteLength) return Promise.reject(`Failed to load ${modelFilename}`)
-
-            let expressionBuffers = [] as ArrayBuffer[]
-            let expressionCount = 0
-            try {
-                expressionCount = this.settings.getExpressionCount()
-            } catch {}
-            for (let i = 0; i < expressionCount; i++) {
-                const filename = this.settings.getExpressionFileName(i)
-                const expressionBuffer = files[filename]
-                if (!expressionBuffer?.byteLength) return Promise.reject(`Failed to load ${filename}`)
-                expressionBuffers.push(expressionBuffer)
-            }
-
-            let physicsBuffer = null as ArrayBuffer | null
-            let physicsFilename = ""
-            try {
-                physicsFilename = this.settings.getPhysicsFileName()
-            } catch {}
-            if (physicsFilename) {
-                physicsBuffer = files[physicsFilename]
-                if (!physicsBuffer?.byteLength) return Promise.reject(`Failed to load ${physicsFilename}`)
-            }
-    
-            let poseBuffer = null as ArrayBuffer | null
-            let poseFilename = ""
-            try {
-                poseFilename = this.settings.getPoseFileName()
-            } catch {}
-            if (poseFilename) {
-                poseBuffer = files[poseFilename]
-                if (!poseBuffer?.byteLength) return Promise.reject(`Failed to load ${poseFilename}`)
-            }
-    
-            let userDataBuffer = null as ArrayBuffer | null
-            let userDataFile = ""
-            try {
-                userDataFile = this.settings.getUserDataFile()
-            } catch {}
-            if (userDataFile) {
-                userDataBuffer = files[userDataFile]
-                if (!userDataBuffer?.byteLength) return Promise.reject(`Failed to load ${userDataFile}`)
-            }
-
-            let motionGroups = [] as {group: string, motionData: {motionBuffers: ArrayBuffer[], wavBuffer: ArrayBuffer | null}}[]
-            let totalMotionCount = 0
-            let motionGroupCount = 0
-            try {
-                motionGroupCount = this.settings.getMotionGroupCount()
-            } catch {}
-            for (let i = 0; i < motionGroupCount; i++) {
-                const group = this.settings.getMotionGroupName(i)
-                let motionCount = 0
-                try {
-                    motionCount = this.settings.getMotionCount(group)
-                } catch {}
-                totalMotionCount += motionCount
-    
-                let motionBuffers = [] as ArrayBuffer[]
-                let wavBuffer = null as ArrayBuffer | null
-                for (let i = 0; i < motionCount; i++) {
-                    const filename = this.settings.getMotionFileName(group, i)
-                    const motionBuffer = files[filename]
-                    if (!motionBuffer?.byteLength) return Promise.reject(`Failed to load ${filename}`)
-                    motionBuffers.push(motionBuffer)
-
-                    let voice = ""
-                    try {
-                        voice = this.settings.getMotionSoundFileName(group, i)
-                    } catch {}
-                    if (voice.localeCompare("") !== 0) {
-                        wavBuffer = files[voice]
-                    }
-                }
-                motionGroups.push({group, motionData: {motionBuffers, wavBuffer}})
-            }
-            this.totalMotionCount = totalMotionCount
-
-            const textureImages = [] as HTMLImageElement[]
-            let textureCount = 0
-            try {
-                textureCount = this.settings.getTextureCount()
-            } catch {}
-            for (let i = 0; i < textureCount; i++) {
-                const filename = this.settings.getTextureFileName(i)
-
-                const imageArrayBuffer = files[filename]
-                const blob = new Blob([imageArrayBuffer])
-                const url = URL.createObjectURL(blob)
-    
-                const img = new Image()
-                img.src = url
-                await new Promise<void>((resolve) => {
-                    img.onload = () => resolve()
-                })
-                textureImages.push(img)
-            }
-    
-            this.buffers = {modelBuffer, expressionBuffers, physicsBuffer, poseBuffer, userDataBuffer, motionGroups, textureImages}
-            return this.buffers
         } else {
-            let basename = path.dirname(link)
-            const settingsBuffer = await fetch(link).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
+            const settingsBuffer = await fetch(link).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
             if (!settingsBuffer.byteLength) return Promise.reject(`Failed to load ${link}`)
-            const settings = new CubismModelSettingJson(settingsBuffer, settingsBuffer.byteLength)
-            this.settings = settings
     
-            const modelFilename = settings.getModelFileName()
-            const modelPath = path.join(basename, modelFilename)
-            const modelBuffer = await fetch(modelPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
-            if (!modelBuffer.byteLength) return Promise.reject(`Failed to load ${modelPath}`)
-            this.size = modelBuffer.byteLength
-    
-            let expressionBuffers = [] as ArrayBuffer[]
-            let expressionCount = 0
-            try {
-                expressionCount = this.settings.getExpressionCount()
-            } catch {}
-            for (let i = 0; i < expressionCount; i++) {
-                const filename = settings.getExpressionFileName(i)
-                const expressionPath = path.join(basename, filename)
-                const expressionBuffer = await fetch(expressionPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
-                if (!expressionBuffer.byteLength) return Promise.reject(`Failed to load ${expressionPath}`)
-                expressionBuffers.push(expressionBuffer)
-            }
-    
-            let physicsBuffer = null as ArrayBuffer | null
-            let physicsFilename = ""
-            try {
-                physicsFilename = settings.getPhysicsFileName()
-            } catch {}
-            if (physicsFilename) {
-                const physicsPath = path.join(basename, physicsFilename)
-                physicsBuffer = await fetch(physicsPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
-                if (!physicsBuffer.byteLength) return Promise.reject(`Failed to load ${physicsPath}`)
-            }
-    
-            let poseBuffer = null as ArrayBuffer | null
-            let poseFilename = ""
-            try {
-                poseFilename = settings.getPoseFileName()
-            } catch {}
-            if (poseFilename) {
-                const posePath = path.join(basename, poseFilename)
-                poseBuffer = await fetch(posePath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
-                if (!poseBuffer.byteLength) return Promise.reject(`Failed to load ${posePath}`)
-            }
-    
-            let userDataBuffer = null as ArrayBuffer | null
-            let userDataFile = ""
-            try {
-                userDataFile = settings.getUserDataFile()
-            } catch {}
-            if (userDataFile) {
-                const userDataPath = path.join(basename, userDataFile)
-                userDataBuffer = await fetch(userDataPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
-                if (!userDataBuffer.byteLength) return Promise.reject(`Failed to load ${userDataPath}`)
-            }
-    
-            let motionGroups = [] as {group: string, motionData: {motionBuffers: ArrayBuffer[], wavBuffer: ArrayBuffer | null}}[]
-            let totalMotionCount = 0
-            let motionGroupCount = 0
-            try {
-                motionGroupCount = settings.getMotionGroupCount()
-            } catch {}
-            for (let i = 0; i < motionGroupCount; i++) {
-                const group = settings.getMotionGroupName(i)
-                let motionCount = 0
-                try {
-                    motionCount = this.settings.getMotionCount(group)
-                } catch {}
-                totalMotionCount += motionCount
-    
-                let motionBuffers = [] as ArrayBuffer[]
-                let wavBuffer = null as ArrayBuffer | null
-                for (let i = 0; i < motionCount; i++) {
-                    const filename = this.settings.getMotionFileName(group, i)
-                    const motionPath = path.join(basename, filename)
-                    const motionBuffer = await fetch(motionPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
-                    if (!motionBuffer.byteLength) return Promise.reject(`Failed to load ${motionPath}`)
-                    motionBuffers.push(motionBuffer)
-
-                    let voice = ""
-                    try {
-                        voice = this.settings.getMotionSoundFileName(group, i)
-                    } catch {}
-                    if (voice.localeCompare("") !== 0) {
-                        const wavPath = path.join(basename, voice)
-                        wavBuffer = await fetch(wavPath).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
-                        if (!wavBuffer.byteLength) return Promise.reject(`Failed to load ${wavPath}`)
-                    }
-                }
-                motionGroups.push({group, motionData: {motionBuffers, wavBuffer}})
-            }
-            this.totalMotionCount = totalMotionCount
-    
-            const textureImages = [] as HTMLImageElement[]
-            let textureCount = 0
-            try {
-                textureCount = settings.getTextureCount()
-            } catch {}
-            for (let i = 0; i < textureCount; i++) {
-                const filename = this.settings.getTextureFileName(i)
-                const texturePath = path.join(basename, filename)
-    
-                const img = new Image()
-                img.src = texturePath
-                await new Promise<void>((resolve) => {
-                    img.onload = () => resolve()
-                })
-                textureImages.push(img)
-            }
-    
-            this.buffers = {modelBuffer, expressionBuffers, physicsBuffer, poseBuffer, userDataBuffer, motionGroups, textureImages}
-            return this.buffers
+            this.settings = new CubismModelSettingJson(settingsBuffer, settingsBuffer.byteLength)
         }
-    }
+    
+        const getBuffer = async (filename: string) => {
+            if (isZip) {
+                const buffer = files[filename]
+                if (!buffer?.byteLength) return Promise.reject(`Failed to load ${filename}`)
+                return buffer
+            } else {
+                const filePath = path.join(basename, filename)
+                const buffer = await fetch(filePath).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
+                if (!buffer.byteLength) return Promise.reject(`Failed to load ${filePath}`)
+                return buffer
+            }
+        }
+    
+        const getBufferOptional = async (getFilenameFn: Function) => {
+            try {
+                const filename = getFilenameFn()
+                return filename ? await getBuffer(filename) : null
+            } catch {
+                return null
+            }
+        }
+    
+        const getBufferArray = async (count: number, getFilenameFn: Function) => {
+            const buffers = [] as ArrayBuffer[]
+            for (let i = 0; i < count; i++) {
+                buffers.push(await getBuffer(getFilenameFn(i)))
+            }
+            return buffers
+        }
+    
+        const modelBuffer = await getBuffer(this.settings.getModelFileName())
+        this.size = modelBuffer.byteLength
+    
+        const expressionBuffers = await getBufferArray(this.settings.getExpressionCount(), (i: number) => this.settings.getExpressionFileName(i))
+        const physicsBuffer = await getBufferOptional(() => this.settings.getPhysicsFileName())
+        const poseBuffer = await getBufferOptional(() => this.settings.getPoseFileName())
+        const userDataBuffer = await getBufferOptional(() => this.settings.getUserDataFile())
+    
+        const motionGroups = []
+        for (let i = 0; i < this.settings.getMotionGroupCount(); i++) {
+            const group = this.settings.getMotionGroupName(i)
+            const motionBuffers = await getBufferArray(this.settings.getMotionCount(group), (i: number) => this.settings.getMotionFileName(group, i))
+            const wavBuffer = await getBufferOptional(() => this.settings.getMotionSoundFileName(group, i))
+    
+            motionGroups.push({group, motionData: {motionBuffers, wavBuffer}})
+        }
+    
+        const textureImages = []
+        for (let i = 0; i < this.settings.getTextureCount(); i++) {
+            const filename = this.settings.getTextureFileName(i)
+            const buffer = await getBuffer(filename)
+            const blob = new Blob([buffer])
+            const url = URL.createObjectURL(blob)
+            const img = new Image()
+            img.src = url
+            await new Promise(resolve => (img.onload = resolve))
+            textureImages.push(img)
+        }
+    
+        this.buffers = {modelBuffer, expressionBuffers, physicsBuffer, poseBuffer, userDataBuffer, motionGroups, textureImages}
+        return this.buffers
+    }    
 
     public load = async (link: string) => {
         if (!this.cubismLoaded) await this.initializeCubism()
@@ -930,42 +774,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         return CubismMoc.hasMocConsistency(modelBuffer)
     }
 
-    public pointerDown = (event: PointerEvent) => {
-        if (this.paused) return
-        const rect = this.canvas.getBoundingClientRect()
-        const posX = event.clientX - rect.left
-        const posY = event.clientY - rect.top
-        this.touchController.touchStart(posX, posY)
-    }
-
-    public pointerMove = (event: PointerEvent) => {
-        if (this.paused) return
-        const rect = this.canvas.getBoundingClientRect()
-        const posX = event.clientX - rect.left
-        const posY = event.clientY - rect.top
-
-        const x = this.transformX(this.touchController.lastX)
-        const y = this.transformY(this.touchController.lastY)
-
-        this.touchController.touchMove(posX, posY)
-        this.setDragging(x, y)
-    }
-
-    public pointerUp = (event: PointerEvent) => {
-        if (this.paused) return
-        const rect = this.canvas.getBoundingClientRect()
-        const posX = event.clientX - rect.left
-        const posY = event.clientY - rect.top
-        this.setDragging(0, 0)
-        const x = this.transformX(posX)
-        const y = this.transformY(posY)
-        if (this.hitTest("Head", x, y)) {
-            this.setRandomExpression()
-        } else if (this.hitTest("Body", x, y)) {
-            this.startRandomMotion("TapBody", MotionPriority.Normal)
-        }
-    }
-
     public transformX = (pointX: number) => {
         const screenX = this.deviceToScreen.transformX(pointX)
         return this.viewMatrix.invertTransformX(screenX)
@@ -974,21 +782,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public transformY = (pointY: number) => {
         const screenY = this.deviceToScreen.transformY(pointY)
         return this.viewMatrix.invertTransformY(screenY)
-    }
-
-    public startPointerInteractions = () => {
-        if (!this.autoInteraction) return
-        document.addEventListener("pointerdown", this.pointerDown, {passive: true})
-        document.addEventListener("pointermove", this.pointerMove, {passive: true})
-        document.addEventListener("pointerup", this.pointerUp, {passive: true})
-        document.addEventListener("pointercancel", this.pointerUp, {passive: true})
-    }
-
-    public cancelPointerInteractions = () => {
-        document.removeEventListener("pointerdown", this.pointerDown)
-        document.removeEventListener("pointermove", this.pointerMove)
-        document.removeEventListener("pointerup", this.pointerUp)
-        document.removeEventListener("pointercancel", this.pointerUp)
     }
 
     public takeScreenshot = async (format: string = "png") => {

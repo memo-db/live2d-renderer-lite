@@ -7,8 +7,8 @@ const CopyPlugin = require("copy-webpack-plugin")
 const webpack = require("webpack")
 const path = require("path")
 const Dotenv = require("dotenv-webpack")
-let exclude = [/node_modules/, /dist/, /build/]
-let webExclude = [...exclude, /demo\/server.ts/]
+let exclude = [/node_modules/, /dist/]
+let webExclude = [...exclude, /server.ts/, /routes/]
 
 module.exports = [
   {
@@ -34,7 +34,7 @@ module.exports = [
     },
     plugins: [
       new Dotenv(),
-      new ForkTsCheckerWebpackPlugin({typescript: {configFile: "./demo/tsconfig.json", memoryLimit: 8192}}),
+      new ForkTsCheckerWebpackPlugin({typescript: {memoryLimit: 8192}}),
       new webpack.HotModuleReplacementPlugin(),
       new MiniCssExtractPlugin({
         filename: "styles.css",
@@ -80,7 +80,7 @@ module.exports = [
     },
     plugins: [
       new Dotenv(),
-      new ForkTsCheckerWebpackPlugin({typescript: {configFile: "./demo/tsconfig.json", memoryLimit: 8192}}),
+      new ForkTsCheckerWebpackPlugin(),
       new webpack.HotModuleReplacementPlugin(),
       new MiniCssExtractPlugin({
         filename: "styles.css",
