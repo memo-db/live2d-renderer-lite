@@ -10,8 +10,6 @@ const Dotenv = require("dotenv-webpack")
 let exclude = [/node_modules/, /dist/]
 let webExclude = [...exclude, /server.ts/, /routes/]
 
-console.log(process.env.TESTING)
-
 module.exports = [
   {
     target: "web",
