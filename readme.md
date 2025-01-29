@@ -17,6 +17,7 @@ npm install live2d-renderer
 ```
 
 ### Useful Links
+- [**Demo Site**](https://moebits.github.io/live2d-renderer/)
 - [**Live2D Cubism Web SDK**](https://www.live2d.com/en/sdk/download/web/)
 
 ### Live2D Cubism Core
@@ -109,7 +110,7 @@ own animation loop where you call the model's `update` method repeatedly.
 const model = new Live2DCubismModel(canvas, {autoAnimate: false})
 
 const loop = async () => {
-    await model.update()
+    model.update()
     id = window.requestAnimationFrame(loop)
 }
 loop()

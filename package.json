@@ -9,7 +9,9 @@
     "build": "npm run clean-build && tsc && npm run clean-core",
     "clean": "del-cli ./dist",
     "clean-build": "del-cli ./build",
-    "clean-core": "del-cli ./build/core"
+    "clean-core": "del-cli ./build/core",
+    "predeploy": "npm run clean && webpack",
+    "deploy": "gh-pages -d dist"
   },
   "keywords": [
     "live2d",
@@ -22,6 +24,7 @@
     "type": "git",
     "url": "https://github.com/Moebits/Live2D-Renderer"
   },
+  "homepage": "https://moebits.github.io/live2d-renderer/",
   "author": "Moebits",
   "license": "MIT",
   "devDependencies": {
@@ -46,6 +49,7 @@
     "express": "^4.17.3",
     "file-loader": "^6.0.0",
     "fork-ts-checker-webpack-plugin": "^5.1.0",
+    "gh-pages": "^6.3.0",
     "html-loader": "^5.1.0",
     "html-webpack-plugin": "^5.5.1",
     "less": "^3.12.2",

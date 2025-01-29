@@ -42,7 +42,6 @@ module.exports = [
       }),
       new HtmlWebpackPlugin({
         template: "./demo/demo.html",
-        publicPath: "/",
         minify: false
       }),
       new webpack.ProvidePlugin({
@@ -50,11 +49,6 @@ module.exports = [
       }),
       new webpack.ProvidePlugin({
           process: "process/browser",
-      }),
-      new CopyPlugin({
-        patterns: [
-          {from: "core/live2dcubismcore.min.js", to: "[name][ext]"}
-        ]
       })
     ]
   }, 
