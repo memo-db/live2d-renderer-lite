@@ -10,6 +10,8 @@ const Dotenv = require("dotenv-webpack")
 let exclude = [/node_modules/, /dist/]
 let webExclude = [...exclude, /server.ts/, /routes/]
 
+console.log(process.env.TESTING)
+
 module.exports = [
   {
     target: "web",
@@ -42,6 +44,7 @@ module.exports = [
       }),
       new HtmlWebpackPlugin({
         template: "./demo/demo.html",
+        publicPath: process.env.TESTING === "yes" ? "/" : "/live2d-renderer",
         minify: false
       }),
       new webpack.ProvidePlugin({

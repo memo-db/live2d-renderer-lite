@@ -5,7 +5,7 @@
   "main": "build/live2dcubism.js",
   "types": "build/live2dcubism.d.ts",
   "scripts": {
-    "start": "npm run clean && webpack && node dist/server.js",
+    "start": "npm run clean && TESTING=yes webpack && node dist/server.js",
     "build": "npm run clean-build && tsc && npm run clean-core",
     "clean": "del-cli ./dist",
     "clean-build": "del-cli ./build",
