@@ -9,14 +9,16 @@ import {CubismMotionQueueManager, CubismMotionQueueEntryHandle, InvalidMotionQue
 import {CubismFramework} from "../framework/src/live2dcubismframework"
 import {CubismViewMatrix} from "../framework/src/math/cubismviewmatrix"
 import {CubismMatrix44} from "../framework/src/math/cubismmatrix44"
-import {CubismMotion} from "../framework/src/motion/cubismmotion"
 import {CubismMoc} from "../framework/src/model/cubismmoc"
 import {csmVector} from "../framework/src/type/csmvector"
 import {csmMap} from "../framework/src/type/csmmap"
 import {Live2DCubismUserModel} from "./Live2DCubismUserModel"
 import {WavFileController} from "./WavFileController"
 import {TouchController} from "./TouchController"
+import {MotionController} from "./MotionController"
+import {ExpressionController} from "./ExpressionController"
 import {CameraController} from "./CameraController"
+import {WebGLRenderer} from "./WebGLRenderer"
 import path from "path"
 
 export interface Live2DModelOptions {
@@ -59,7 +61,10 @@ export interface Live2DBuffers {
 }
 
 export enum MotionPriority {
-    None, Idle, Normal, Force
+    None, 
+    Idle, 
+    Normal, 
+    Force
 }
 
 let id = null
@@ -68,6 +73,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public buffers: Live2DBuffers
     public motions: csmMap<string, ACubismMotion>
     public expressions: csmMap<string, ACubismMotion>
+    public textures: csmVector<WebGLTexture>
     public eyeBlinkIds: csmVector<CubismIdHandle>
     public lipSyncIds: csmVector<CubismIdHandle>
     public settings: ICubismModelSetting
@@ -80,7 +86,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public currentFrame: DOMHighResTimeStamp
     public lastFrame: DOMHighResTimeStamp
     public queueManager: CubismMotionQueueManager
-    public shader: WebGLProgram
     public paused: boolean
     public needsResize: boolean
     public premultipliedAlpha: boolean
@@ -94,7 +99,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public logicalRight: number
     public wavController: WavFileController
     public touchController: TouchController
+    public motionController: MotionController
+    public expressionController: ExpressionController
     public cameraController: CameraController
+    public webGLRenderer: WebGLRenderer
     public enablePhysics: boolean
     public enableEyeblink: boolean
     public enableBreath: boolean
@@ -178,6 +186,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.loaded = false
         this.motions = new csmMap<string, ACubismMotion>()
         this.expressions = new csmMap<string, ACubismMotion>()
+        this.textures = new csmVector<WebGLTexture>()
         this.eyeBlinkIds = new csmVector<CubismIdHandle>()
         this.lipSyncIds = new csmVector<CubismIdHandle>()
         this.viewMatrix = new CubismViewMatrix()
@@ -198,10 +207,12 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.randomMotion = options.randomMotion ?? true
         this.paused = options.paused ?? false
         this.speed = options.speed ?? 1
-        this.shader = this.createShader()
         this.wavController = new WavFileController()
         this.touchController = new TouchController(this)
+        this.motionController = new MotionController(this)
+        this.expressionController = new ExpressionController(this)
         this.cameraController = new CameraController(this.canvas)
+        this.webGLRenderer = new WebGLRenderer(this)
         this.cameraController.enableZoom = options.enableZoom ?? true
         this.cameraController.enablePan = options.enablePan ?? true
         this.cameraController.minScale = options.minScale ?? 0.1
@@ -225,9 +236,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.expressions.clear()
         this.eyeBlinkIds.clear()
         this.lipSyncIds.clear()
-        CubismFramework.dispose()
+        this.webGLRenderer.deleteTextures()
         this.touchController.cancelInteractions()
         this.cameraController.removeListeners()
+        CubismFramework.dispose()
         this.buffers = null
         this.canvas = null
         this.loaded = false
@@ -344,26 +356,16 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     
         this.buffers = {modelBuffer, expressionBuffers, physicsBuffer, poseBuffer, userDataBuffer, motionGroups, textureImages}
         return this.buffers
-    }    
+    }
 
     public load = async (link: string) => {
         if (!this.cubismLoaded) await this.initializeCubism()
-        const {modelBuffer, expressionBuffers, physicsBuffer, 
-        poseBuffer, userDataBuffer, motionGroups} = await this.loadBuffers(link)
+        const {modelBuffer, physicsBuffer, poseBuffer, userDataBuffer} = await this.loadBuffers(link)
 
         this.loadModel(modelBuffer, this._mocConsistency)
+        this.model.initialize()
 
-        for (let i = 0; i < expressionBuffers.length; i++) {
-            const name = this.settings.getExpressionName(i)
-            const expressionBuffer = expressionBuffers[i]
-            const motion = this.loadExpression(expressionBuffer, expressionBuffer.byteLength, name)
-
-            if (this.expressions.getValue(name) !== null) {
-                ACubismMotion.delete(this.expressions.getValue(name))
-                this.expressions.setValue(name, null)
-            }
-            this.expressions.setValue(name, motion)
-        }
+        await this.expressionController.load()
 
         if (physicsBuffer) {
             this.loadPhysics(physicsBuffer, physicsBuffer.byteLength)
@@ -411,35 +413,13 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.settings.getLayoutMap(layout)
         this.modelMatrix.setupFromLayout(layout)
 
-        this.model.saveParameters()
-
-        for (let i = 0; i < motionGroups.length; i++) {
-            const group = motionGroups[i].group
-            const motionBuffers = motionGroups[i].motionData.motionBuffers
-            const name = `${group}_${i}`
-
-            for (let i = 0; i < motionBuffers.length; i++) {
-                const motionBuffer = motionBuffers[i]
-                const motion = this.loadMotion(motionBuffer, motionBuffer.byteLength, name, null, null, this.settings, group, i)
-
-                if (motion !== null) {
-                    motion.setEffectIds(this.eyeBlinkIds, this.lipSyncIds)
-                    if (this.motions.getValue(name) !== null) {
-                        ACubismMotion.delete(this.motions.getValue(name))
-                    }
-                    this.motions.setValue(name, motion)
-                } else {
-                    this.totalMotionCount--
-                }
-            }
-        }
+        await this.motionController.load()
 
         this.createRenderer()
         await this.loadTextures()
         this.loaded = true
-        const gl = this.canvas.getContext("webgl2")
-        this.getRenderer().startUp(gl)
-        await this.resize()
+        this.webGLRenderer.start()
+        this.resize()
         this.animationLoop()
     }
 
@@ -448,64 +428,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
         for (let i = 0; i < textureImages.length; i++) {
             const img = textureImages[i]
-
-            const gl = this.canvas.getContext("webgl2")
-            const tex = gl.createTexture()
-            gl.bindTexture(gl.TEXTURE_2D, tex)
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-            if (this.premultipliedAlpha) gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1)
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
-            gl.generateMipmap(gl.TEXTURE_2D)
-            gl.bindTexture(gl.TEXTURE_2D, null)
-            
-            this.getRenderer().bindTexture(i, tex)
-            this.getRenderer().setIsPremultipliedAlpha(this.premultipliedAlpha)
+            this.webGLRenderer.loadTexture(i, img)
         }
     }
 
-    public createShader() {
-        const gl = this.canvas.getContext("webgl2")
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER)
-        const vertexShaderString = `
-            precision mediump float;
-            attribute vec3 position;
-            attribute vec2 uv;
-            varying vec2 vuv;
-            void main(void) {
-               gl_Position = vec4(position, 1.0);
-               vuv = uv;
-            }`
-    
-        gl.shaderSource(vertexShader, vertexShaderString)
-        gl.compileShader(vertexShader)
-    
-        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
-        const fragmentShaderString = `
-            precision mediump float;
-            varying vec2 vuv;
-            uniform sampler2D texture;
-            void main(void) {
-               gl_FragColor = texture2D(texture, vuv);
-            }`
-    
-        gl.shaderSource(fragmentShader, fragmentShaderString)
-        gl.compileShader(fragmentShader)
-    
-        const shader = gl.createProgram()
-        gl.attachShader(shader, vertexShader)
-        gl.attachShader(shader, fragmentShader)
-        gl.deleteShader(vertexShader)
-        gl.deleteShader(fragmentShader)
-        gl.linkProgram(shader)
-        gl.useProgram(shader)
-        return shader
-    }
-
-    public resize = async () => {
-        const gl = this.canvas.getContext("webgl2")
-        gl.enable(gl.BLEND)
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    public resize = () => {
         if (this.keepAspect) {
             const ratio = this.width / this.height
             if (this.canvas.width / this.canvas.height >= ratio) {
@@ -519,9 +446,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             this.canvas.width = this.canvas.clientWidth ? this.canvas.clientWidth : this.canvas.width
             this.canvas.height = this.canvas.clientHeight ? this.canvas.clientHeight : this.canvas.height
         }
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
 
-        const {width, height} = gl.canvas
+        const {width, height} = this.canvas
         const ratio = width / height
         const left = -ratio
         const right = ratio
@@ -552,18 +478,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.lastFrame = this.currentFrame
     }
 
-    public draw = () => {
-        if (!this.loaded) return
-        this.projection.multiplyByMatrix(this.modelMatrix)
-        this.getRenderer().setMvpMatrix(this.projection)
-        const gl = this.canvas.getContext("webgl2")
-        const viewport = [0, 0, gl.canvas.width, gl.canvas.height]
-
-        const frameBuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING)
-        this.getRenderer().setRenderState(frameBuffer, viewport)
-        this.getRenderer().drawModel()
-    }
-
     public updateCamera = () => {
         const {x, y, scale} = this.cameraController
         this.viewMatrix.translate(-x, -y)
@@ -571,8 +485,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public updateProjection = () => {
-        const gl = this.canvas.getContext("webgl2")
-        const {width, height} = gl.canvas
+        const {width, height} = this.canvas
         const projection = new CubismMatrix44()
         if (this.model.getCanvasWidth() > 1 && width < height) {
             this.modelMatrix.setWidth(2)
@@ -587,175 +500,133 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.projection = projection
     }
 
-    public update = async () => {
-        if (this.paused) return
-        const gl = this.canvas.getContext("webgl2")
-        if (gl.isContextLost()) return
+    public update = () => {
+        if (this.webGLRenderer.contextLost()) return
 
         this.updateTime()
+        this.updateCamera()
         this.updateProjection()
+        this.webGLRenderer.prepare()
         this.deltaTime *= this.speed
 
         if (this.needsResize) {
             this.resize()
             this.needsResize = false
         }
-
-        gl.clearColor(0, 0, 0, 0)
-        gl.enable(gl.DEPTH_TEST)
-        gl.depthFunc(gl.LEQUAL)
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-        gl.clearDepth(1)
-        gl.enable(gl.BLEND)
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-        gl.useProgram(this.shader)
-        gl.flush()
-
-        this.dragManager.update(this.deltaTime)
-        this.dragX = this.dragManager.getX()
-        this.dragY = this.dragManager.getY()
-
-        let motionUpdated = false
-        if (this.enableMotion) {
-            this.model.loadParameters()
-            if (this.motionManager.isFinished()) {
-                if (this.randomMotion) {
-                    this.startRandomMotion(null, MotionPriority.Idle)
-                } else {
-                    this.startMotion("Idle", 1, MotionPriority.Idle)
+        
+        this.model.saveParameters()
+        if (!this.paused) {
+            this.dragManager.update(this.deltaTime)
+            this.dragX = this.dragManager.getX()
+            this.dragY = this.dragManager.getY()
+    
+            let motionUpdated = this.motionController.update(this.deltaTime)
+    
+            if (!motionUpdated) {
+                if (this.eyeBlink !== null && this.enableEyeblink) {
+                  this.eyeBlink.updateParameters(this.model, this.deltaTime)
                 }
-            } else {
-                motionUpdated = this.motionManager.updateMotion(this.model, this.deltaTime)
             }
-            this.model.saveParameters()
-            
-        }
-
-        if (!motionUpdated) {
-            if (this.eyeBlink !== null && this.enableEyeblink) {
-              this.eyeBlink.updateParameters(this.model, this.deltaTime)
-            }
-        }
-      
-        if (this.expressionManager != null && this.enableExpression) {
-            this.expressionManager.updateMotion(this.model, this.deltaTime)
-        }
-
-
-        if (this.enableMovement) {
-            const manager = CubismFramework.getIdManager?.()
-            const paramAngleX = manager?.getId(CubismDefaultParameterId.ParamAngleX)
-            const paramAngleY = manager?.getId(CubismDefaultParameterId.ParamAngleY)
-            const paramAngleZ = manager?.getId(CubismDefaultParameterId.ParamAngleZ)
-            const paramBodyAngleX = manager?.getId(CubismDefaultParameterId.ParamBodyAngleX)
-            const paramEyeBallX = manager?.getId(CubismDefaultParameterId.ParamEyeBallX)
-            const paramEyeBallY = manager?.getId(CubismDefaultParameterId.ParamEyeBallY)
-            if (paramAngleX) this.model.addParameterValueById(paramAngleX, this.dragX * 30)
-            if (paramAngleY) this.model.addParameterValueById(paramAngleY, this.dragY * 30)
-            if (paramAngleZ) this.model.addParameterValueById(paramAngleZ, this.dragX * this._dragY * -30)
-            if (paramBodyAngleX) this.model.addParameterValueById(paramBodyAngleX, this._dragX * 10)
-            if (paramEyeBallX) this.model.addParameterValueById(paramEyeBallX, this.dragX)
-            if (paramEyeBallY) this.model.addParameterValueById(paramEyeBallY, this.dragY)
-        }
-
-        if (this.breath !== null && this.enableBreath) {
-            this.breath.updateParameters(this.model, this.deltaTime)
-        }
-
-        if (this.physics !== null && this.enablePhysics) {
-            this.physics.evaluate(this.model, this.deltaTime)
-        }
-
-        if (this.lipsync && this.enableLipsync) {
-            this.wavController.update(this.deltaTime)
-            let value = this.wavController.getRms()
     
-            for (let i = 0; i < this.lipSyncIds.getSize(); ++i) {
-                this.model.addParameterValueById(this.lipSyncIds.at(i), value, 0.8)
-            }
-        }
+            this.expressionController.update(this.deltaTime)
     
-        if (this.pose !== null && this.enablePose) {
-          this.pose.updateParameters(this.model, this.deltaTime)
+            if (this.enableMovement) {
+                const manager = CubismFramework.getIdManager?.()
+                const paramAngleX = manager?.getId(CubismDefaultParameterId.ParamAngleX)
+                const paramAngleY = manager?.getId(CubismDefaultParameterId.ParamAngleY)
+                const paramAngleZ = manager?.getId(CubismDefaultParameterId.ParamAngleZ)
+                const paramBodyAngleX = manager?.getId(CubismDefaultParameterId.ParamBodyAngleX)
+                const paramEyeBallX = manager?.getId(CubismDefaultParameterId.ParamEyeBallX)
+                const paramEyeBallY = manager?.getId(CubismDefaultParameterId.ParamEyeBallY)
+                if (paramAngleX) this.model.addParameterValueById(paramAngleX, this.dragX * 30)
+                if (paramAngleY) this.model.addParameterValueById(paramAngleY, this.dragY * 30)
+                if (paramAngleZ) this.model.addParameterValueById(paramAngleZ, this.dragX * this._dragY * -30)
+                if (paramBodyAngleX) this.model.addParameterValueById(paramBodyAngleX, this._dragX * 10)
+                if (paramEyeBallX) this.model.addParameterValueById(paramEyeBallX, this.dragX)
+                if (paramEyeBallY) this.model.addParameterValueById(paramEyeBallY, this.dragY)
+            }
+    
+            if (this.breath !== null && this.enableBreath) {
+                this.breath.updateParameters(this.model, this.deltaTime)
+            }
+    
+            if (this.physics !== null && this.enablePhysics) {
+                this.physics.evaluate(this.model, this.deltaTime)
+            }
+    
+            if (this.lipsync && this.enableLipsync) {
+                this.wavController.update(this.deltaTime)
+                let value = this.wavController.getRms()
+        
+                for (let i = 0; i < this.lipSyncIds.getSize(); ++i) {
+                    this.model.addParameterValueById(this.lipSyncIds.at(i), value, 0.8)
+                }
+            }
+        
+            if (this.pose !== null && this.enablePose) {
+              this.pose.updateParameters(this.model, this.deltaTime)
+            }
         }
     
         this.model.update()
-        this.draw()
+        this.model.loadParameters()
+        this.webGLRenderer.draw()
     }
 
     public animationLoop = () => {
         this.update()
         if (!this.autoAnimate) return
         const loop = async () => {
-            this.updateCamera()
-            await this.update()
+            this.update()
             id = window.requestAnimationFrame(loop)
         }
         loop()
     }
 
+    public stopMotions = () => {
+        this.motionController.stopMotions()
+    }
+
     public startMotion = async (group: string, i: number, priority: number, onStartMotion?: BeganMotionCallback, 
         onEndMotion?: FinishedMotionCallback): Promise<CubismMotionQueueEntryHandle> => {
-        if (priority === MotionPriority.Force) {
-          this.motionManager.setReservePriority(priority)
-        } else if (!this.motionManager.reserveMotion(priority)) {
-          return InvalidMotionQueueEntryHandleValue
-        }
-
-        const {motionGroups} = this.buffers
-        const motionGroup = motionGroups.find((motion) => motion.group === group)
-        if (!motionGroup) return
-        const {motionBuffers, wavBuffer} = motionGroup.motionData
-
-        const name = `${group}_${i}`
-        let motion = this.motions.getValue(name) as CubismMotion
-        let autoDelete = false
-
-        if (motion === null) {
-            const motionBuffer = motionBuffers[i]
-
-            motion = this.loadMotion(motionBuffer, motionBuffer.byteLength, null, onEndMotion, onStartMotion, this.settings, group, i)
-            if (!motion) return
-    
-            motion.setEffectIds(this.eyeBlinkIds, this.lipSyncIds)
-            autoDelete = true
-        } else {
-            motion.setBeganMotionHandler(onStartMotion)
-            motion.setFinishedMotionHandler(onEndMotion)
-        }
-
-        if (wavBuffer) {
-            this.wavController.start(wavBuffer)
-        }
-
-        return this.motionManager.startMotionPriority(motion, autoDelete, priority)
+            return this.motionController.startMotion(group, i, priority, onStartMotion, onEndMotion)
     }
 
     public startRandomMotion = async (group: string | null, priority: number, onStartMotion?: BeganMotionCallback, 
         onEndMotion?: FinishedMotionCallback): Promise<CubismMotionQueueEntryHandle> => {
-        if (!this.loaded) return
-        if (!group) {
-            const randGroup = Math.floor(Math.random() * this.settings.getMotionGroupCount())
-            group = this.settings.getMotionGroupName(randGroup)
+            return this.motionController.startRandomMotion(group, priority, onStartMotion, onEndMotion)
+    }
+
+    public getExpressions = () => {
+        let expressions = [] as string[]
+        const expressionCount = this.settings.getExpressionCount() || 0
+        for (let i = 0; i < expressionCount; i++) {
+            const expression = this.settings.getExpressionName(i)
+            expressions.push(expression)
         }
-        let motionCount = 0
-        try {
-            motionCount = this.settings.getMotionCount(group)
-        } catch {}
-        const rand = Math.floor(Math.random() * motionCount)
-        return this.startMotion(group, rand, priority, onStartMotion, onEndMotion)
+        return expressions
+    }
+
+    public getMotions = () => {
+        let motions = [] as string[]
+        const motionGroupCount = this.settings.getMotionGroupCount() || 0
+        for (let i = 0; i < motionGroupCount; i++) {
+            const group = this.settings.getMotionGroupName(i)
+            let motionCount = this.settings.getMotionCount(group) || 0
+            for (let j = 0; j < motionCount; j++) {
+                let name = `${group}_${j}`
+                motions.push(name)
+            }
+        }
+        return motions
     }
 
     public setExpression = (expression: string) => {
-        const motion = this.expressions.getValue(expression)
-        if (motion !== null) this.expressionManager.startMotion(motion, false)
+        return this.expressionController.setExpression(expression)
     }
 
     public setRandomExpression = () => {
-        if (!this.expressions.getSize()) return
-        const rand = Math.floor(Math.random() * this.expressions.getSize())
-        const name = this.expressions._keyValues[rand].first
-        this.setExpression(name)
+        return this.expressionController.setRandomExpression()
     }
 
     public hitTest = (areaName: string, x: number, y: number) => {
@@ -785,7 +656,15 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public takeScreenshot = async (format: string = "png") => {
-        await this.update()
+        this.update()
         return this.canvas.toDataURL(`image/${format}`)
+    }
+
+    public zoomIn = (factor = 0.1) => {
+        return this.cameraController.zoomIn(factor)
+    }
+
+    public zoomOut = (factor = 0.1) => {
+        return this.cameraController.zoomOut(factor)
     }
 }

@@ -1,0 +1,135 @@
+.parameters-container {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    z-index: 5000;  
+    background-color: transparent;
+    pointer-events: none;
+    left: 50px;
+}
+
+.parameters-container-right {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    z-index: 5000;  
+    background-color: transparent;
+    pointer-events: none;
+    right: 50px;
+}
+
+.parameters-dialog-box {
+    max-height: 400px;
+    width: 400px;
+    overflow: overlay;
+    background-color: var(--parametersBG);
+    border: 2px solid var(--highlight);
+    pointer-events: all;
+}
+
+.parts-dialog-box {
+    margin-top: 20px;
+    max-height: 300px;
+    width: 300px;
+    overflow: overlay;
+    background-color: var(--parametersBG);
+    border: 2px solid var(--highlight);
+    pointer-events: all;
+}
+
+.parameters-dialog-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    &:hover {
+        filter: brightness(140%);
+    }
+}
+
+.parameters-dialog-row-center {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    &:hover {
+        filter: brightness(140%);
+    }
+}
+
+.parameters-dialog-title {
+    margin-right: 5px;
+    font-family: Tahoma, sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    margin-left: 5px;
+    color: var(--highlight);
+}
+
+.parameters-dialog-text {
+    margin-right: 5px;
+    font-family: Tahoma, sans-serif;
+    font-size: 16px;
+    margin-left: 5px;
+    color: var(--highlight);
+}
+
+.parameters-dialog-icon {
+    width: auto;
+    height: 20px;
+}
+
+.parameters-slider {
+    display: flex;
+    width: 140px;
+    height: 100%;
+    margin-left: 10px;
+    margin-right: 10px;
+    align-items: center;
+}
+
+.parameters-slider-track {
+    display: flex;
+    height: 5px;
+    background-color: var(--highlight);
+}
+
+.parameters-slider-track.parameters-slider-track-1 {
+    background-color: var(--highlight);
+}
+
+.parameters-slider-thumb {
+    opacity: 1;
+    display: flex;
+    margin-top: -1px;
+    border-radius: 5px;
+    height: 12px;
+    width: 12px;
+    background-color: #fd183e;
+    &:active {
+        outline: none;
+    }
+    &:focus {
+        outline: none;
+    }
+}
+
+.parameters-button {
+    background-color: var(--highlight);
+    border: 1px solid var(--highlight);
+    color: white;
+    font-family: Tahoma, sans-serif;
+    font-weight: bold;
+    font-size: 15px;
+    padding: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+    margin-top: -5px;
+    margin-bottom: 3px;
+    &:hover {
+        background-color: white;
+        color: var(--highlight);
+    }
+}

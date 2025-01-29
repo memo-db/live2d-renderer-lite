@@ -24,7 +24,7 @@ module.exports = [
     optimization: {minimize: false, minimizer: [new TerserJSPlugin({extractComments: false})], moduleIds: "named"},
     module: {
       rules: [
-        {test: /\.(jpe?g|png|gif|webp|svg|mp3|wav|mp4|webm|ttf|otf|pdf|txt|svg)$/, exclude: webExclude, use: [{loader: "file-loader", options: {name: "[path][name].[ext]"}}]},
+        {test: /\.(jpe?g|png|gif|webp|svg|mp3|wav|mp4|webm|ttf|otf|pdf|txt|svg|zip)$/, exclude: webExclude, use: [{loader: "file-loader", options: {name: "[path][name].[ext]"}}]},
         {test: /\.(txt|sql)$/, exclude: webExclude, use: ["raw-loader"]},
         {test: /\.html$/, exclude: webExclude, use: [{loader: "html-loader", options: {minimize: false, sources: false}}]},
         {test: /\.less$/, exclude: webExclude, use: [{loader: MiniCssExtractPlugin.loader, options: {hmr: true}}, "css-loader", {loader: "less-loader"}]},
@@ -41,7 +41,7 @@ module.exports = [
         chunkFilename: "[id].css"
       }),
       new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, "./demo/demo.html"),
+        template: "./demo/demo.html",
         publicPath: "/",
         minify: false
       }),
@@ -70,7 +70,7 @@ module.exports = [
     optimization: {minimize: true, minimizer: [new TerserJSPlugin({extractComments: false})], moduleIds: "named"},
     module: {
       rules: [
-        {test: /\.(jpe?g|png|webp|gif|svg|mp3|wav|mp4|webm|ttf|otf|pdf|txt|svg)$/, exclude, use: [{loader: "file-loader", options: {name: "[path][name].[ext]"}}]},
+        {test: /\.(jpe?g|png|webp|gif|svg|mp3|wav|mp4|webm|ttf|otf|pdf|txt|svg|zip)$/, exclude, use: [{loader: "file-loader", options: {name: "[path][name].[ext]"}}]},
         {test: /\.(txt|sql)$/, exclude, use: ["raw-loader"]},
         {test: /\.html$/, exclude, use: [{loader: "html-loader", options: {minimize: false}}]},
         {test: /\.less$/, exclude, use: [{loader: MiniCssExtractPlugin.loader, options: {hmr: true}}, "css-loader", {loader: "less-loader"}]},

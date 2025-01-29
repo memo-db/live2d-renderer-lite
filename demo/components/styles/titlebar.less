@@ -1,0 +1,50 @@
+.titlebar-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--background);
+    height: max-content;
+}
+
+.titlebar-logo {
+    width: auto;
+    height: 70px;
+}
+
+.upload-button {
+    margin-left: 20px;
+    background-color: var(--highlight);
+    border: none;
+    padding: 3px 5px;
+    cursor: pointer !important;
+    pointer-events: all;
+    transition: all 0.1s;
+    border-radius: 7px;
+    border: 2px solid white;
+    z-index: 9000;
+}
+
+.upload-button-hover {
+    border: 2px solid var(--highlight);
+    background-color: white;
+    & > img {
+        filter: none;
+    }
+    & > span {
+        color: var(--highlight);
+    }
+}
+
+.upload-button-img {
+    height: 20px;
+    width: auto;
+    filter: brightness(0) invert(1);
+}
+
+.upload-button-text {
+    margin-left: 5px;
+    font-family: Tahoma, sans-serif;
+    font-size: 23px;
+    color: white;
+}

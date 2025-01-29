@@ -26,6 +26,28 @@ export class CameraController {
         this.addListeners()
     }
 
+    public zoomIn = (factor = 0.1) => {
+        if (!this.enableZoom) return
+        const zoomFactor = 1 + factor
+        const newScale = Math.min(this.scale * zoomFactor, this.maxScale)
+        const offsetX = this.x / this.scale
+        const offsetY = this.x / this.scale
+        this.scale = newScale
+        this.x = this.x - offsetX * newScale
+        this.y = this.y - offsetY * newScale
+    }
+
+    public zoomOut = (factor = 0.1) => {
+        if (!this.enableZoom) return
+        const zoomFactor = 1 - factor
+        const newScale = Math.max(this.scale * zoomFactor, this.minScale)
+        const offsetX = this.x / this.scale
+        const offsetY = this.x / this.scale
+        this.scale = newScale
+        this.x = this.x - offsetX * newScale
+        this.y = this.y - offsetY * newScale
+    }
+
     public handleMouseDown = (event: MouseEvent) => {
         if (!this.enablePan) return
         this.isPanning = true
