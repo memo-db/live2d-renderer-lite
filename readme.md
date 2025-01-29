@@ -17,7 +17,7 @@ npm install live2d-renderer
 ```
 
 ### Useful Links
-- [**Demo Site**](https://moebits.github.io/live2d-renderer/)
+- [**Demo Site**](https://live2d-renderer.netlify.app/)
 - [**Live2D Cubism Web SDK**](https://www.live2d.com/en/sdk/download/web/)
 
 ### Live2D Cubism Core

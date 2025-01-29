@@ -42,7 +42,6 @@ module.exports = [
       }),
       new HtmlWebpackPlugin({
         template: "./demo/demo.html",
-        publicPath: process.env.TESTING === "yes" ? "/" : "/live2d-renderer",
         minify: false
       }),
       new webpack.ProvidePlugin({

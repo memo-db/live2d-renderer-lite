@@ -1,6 +1,6 @@
 {
   "name": "live2d-renderer",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "An easy and simple to use Live2D model renderer in the browser.",
   "main": "build/live2dcubism.js",
   "types": "build/live2dcubism.d.ts",
@@ -24,7 +24,7 @@
     "type": "git",
     "url": "https://github.com/Moebits/Live2D-Renderer"
   },
-  "homepage": "https://moebits.github.io/live2d-renderer/",
+  "homepage": "https://live2d-renderer.netlify.app/",
   "author": "Moebits",
   "license": "MIT",
   "devDependencies": {
