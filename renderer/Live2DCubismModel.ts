@@ -19,6 +19,8 @@ import {MotionController} from "./MotionController"
 import {ExpressionController} from "./ExpressionController"
 import {CameraController} from "./CameraController"
 import {WebGLRenderer} from "./WebGLRenderer"
+import fileType from "magic-bytes.js"
+import JSZip, { file } from "jszip"
 import path from "path"
 
 export interface Live2DModelOptions {
@@ -74,6 +76,30 @@ type EventMap = {
 }
 
 let id = null
+
+export const isLive2DZip = async (link: string) => {
+    let isZip = path.extname(link).replace(".", "") === "zip"
+    const arrayBuffer = await fetch(link).then(r => r.arrayBuffer())
+
+    const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
+    if (result.mime === "application/zip") isZip = true
+    if (!isZip) return false
+    
+    const zip = await JSZip.loadAsync(arrayBuffer)
+    
+    let hasModel = false
+    let hasMoc3 = false
+    let hasTexture = false
+
+    for (const [relativePath, file] of Object.entries(zip.files)) {
+        if (relativePath.startsWith("__MACOSX") || file.dir) continue
+        if (relativePath.endsWith('model3.json')) hasModel = true
+        if (relativePath.endsWith("moc3")) hasMoc3 = true
+        if (relativePath.match(/\.(png|jpg|webp|avif)$/)) hasTexture = true
+    }
+    
+    return hasModel && hasMoc3 && hasTexture
+}
 
 export class Live2DCubismModel extends Live2DCubismUserModel {
     private events: {[event: string]: Function[]} = {}
@@ -304,15 +330,19 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public loadBuffers = async (link: string) => {
-        const isZip = path.extname(link).replace(".", "") === "zip"
+        let isZip = path.extname(link).replace(".", "") === "zip"
+        const arrayBuffer = await fetch(link).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
+        if (!arrayBuffer.byteLength) return Promise.reject(`Failed to load ${link}`)
+
+        const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
+        if (result.mime === "application/zip") isZip = true
+
         let files = {} as {[key: string]: ArrayBuffer}
         let basename = path.dirname(link)
     
         if (isZip) {
-            const JSZip = await import("jszip").then(r => r.default)
-            const zipBuffer = await fetch(link).then(r => r.arrayBuffer())
-            const zip = await JSZip.loadAsync(zipBuffer)
-            this.size = zipBuffer.byteLength
+            const zip = await JSZip.loadAsync(arrayBuffer)
+            this.size = arrayBuffer.byteLength
     
             for (const [relativePath, file] of Object.entries(zip.files)) {
                 if (relativePath.startsWith("__MACOSX") || file.dir) continue
@@ -322,10 +352,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 if (!this.settings && key.endsWith("model3.json")) this.settings = new CubismModelSettingJson(contents, contents.byteLength)
             }
         } else {
-            const settingsBuffer = await fetch(link).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
-            if (!settingsBuffer.byteLength) return Promise.reject(`Failed to load ${link}`)
-    
-            this.settings = new CubismModelSettingJson(settingsBuffer, settingsBuffer.byteLength)
+            this.settings = new CubismModelSettingJson(arrayBuffer, arrayBuffer.byteLength)
         }
     
         const getBuffer = async (filename: string) => {

@@ -12,7 +12,7 @@ const TitleBar: React.FunctionComponent = (props) => {
         const file = event.target.files?.[0]
         if (!file) return
         const url = URL.createObjectURL(file)
-        setModel(url + "#.zip")
+        setModel(url)
     }
 
     return (
