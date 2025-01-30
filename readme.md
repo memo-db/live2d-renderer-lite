@@ -91,6 +91,8 @@ export interface Live2DModelOptions {
     premultipliedAlpha?: boolean = true
     // The smoothing factor of the lip sync.
     lipSyncSmoothing?: number = 0.1
+    // Maximum texture size. Must be a power of 2. Defaults to the WebGL max (usually 8192).
+    maxTextureSize?: number = 8192
     // You can toggle various features in the animation loop.
     enablePhysics?: boolean = true
     enableEyeblink?: boolean = true

@@ -54,13 +54,34 @@ export class WebGLRenderer {
 
     public loadTexture = (index: number, image: HTMLImageElement) => {
         const gl = this.model.canvas.getContext("webgl2")
+        const maxTextureSize = this.model.maxTextureSize ?? gl.getParameter(gl.MAX_TEXTURE_SIZE)
+        let resized = image as HTMLImageElement | HTMLCanvasElement
+
+        if (image.width > maxTextureSize || image.height > maxTextureSize) {
+            const canvas = document.createElement("canvas")
+            const ctx = canvas.getContext("2d")
+            const aspectRatio = image.width / image.height
+            if (image.width > image.height) {
+                canvas.width = maxTextureSize
+                canvas.height = maxTextureSize / aspectRatio
+            } else {
+                canvas.height = maxTextureSize
+                canvas.width = maxTextureSize * aspectRatio
+            }
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+            resized = canvas
+        }
+
         const tex = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, tex)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
         if (this.model.premultipliedAlpha) gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
-        gl.generateMipmap(gl.TEXTURE_2D)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resized)
+
+        if ((resized.width & (resized.width - 1)) === 0 && (resized.height & (resized.height - 1)) === 0) {
+            gl.generateMipmap(gl.TEXTURE_2D)
+        }
         gl.bindTexture(gl.TEXTURE_2D, null)
         
         this.model.getRenderer().bindTexture(index, tex)

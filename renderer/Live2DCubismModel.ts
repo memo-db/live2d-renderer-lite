@@ -41,6 +41,7 @@ export interface Live2DModelOptions {
     checkMocConsistency?: boolean
     premultipliedAlpha?: boolean
     lipsyncSmoothing?: number
+    maxTextureSize?: number
     enablePhysics?: boolean
     enableEyeblink?: boolean
     enableBreath?: boolean
@@ -116,6 +117,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public enableMovement: boolean
     public enablePose: boolean
     public size: number
+    public maxTextureSize: number
     public totalMotionCount: number = 0
     public needsResize: boolean = false
     public loaded: boolean = false
@@ -236,6 +238,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.randomMotion = options.randomMotion ?? true
         this.paused = options.paused ?? false
         this.speed = options.speed ?? 1
+        if (options.maxTextureSize) this.maxTextureSize = options.maxTextureSize
         this.wavController = new WavFileController()
         this.touchController = new TouchController(this)
         this.motionController = new MotionController(this)
@@ -316,7 +319,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 const key = relativePath.split("/").slice(1).join("/")
                 const contents = await file.async("arraybuffer")
                 files[key] = contents
-                if (key.endsWith("model3.json")) this.settings = new CubismModelSettingJson(contents, contents.byteLength)
+                if (!this.settings && key.endsWith("model3.json")) this.settings = new CubismModelSettingJson(contents, contents.byteLength)
             }
         } else {
             const settingsBuffer = await fetch(link).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
@@ -327,8 +330,15 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     
         const getBuffer = async (filename: string) => {
             if (isZip) {
-                const buffer = files[filename]
-                if (!buffer?.byteLength) return Promise.reject(`Failed to load ${filename}`)
+                let name = filename.startsWith(".") ? filename.split("/").slice(2).join("/") : filename
+                let buffer = null as ArrayBuffer | null
+                for (const [key, value] of Object.entries(files)) {
+                    if (key.includes(name)) {
+                        buffer = value
+                        break
+                    }
+                }
+                if (!buffer?.byteLength) return Promise.reject(`Failed to load ${name}`)
                 return buffer
             } else {
                 const filePath = path.join(basename, filename)
@@ -380,7 +390,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             const url = URL.createObjectURL(blob)
             const img = new Image()
             img.src = url
-            await new Promise(resolve => (img.onload = resolve))
+            await new Promise<void>((resolve, reject) => {
+                img.onload = () => resolve()
+                img.onerror = (err) => reject(err)
+            })
             textureImages.push(img)
         }
     
