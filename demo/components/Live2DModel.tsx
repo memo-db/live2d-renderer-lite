@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState, useContext, useReducer} from "react"
-import {ModelContext, Live2DContext, DefaultOpacitiesContext} from "../demo"
+import {ModelContext, Live2DContext} from "../demo"
 import zoomLock from "../../assets/zoomlock.png"
 import zoomLocked from "../../assets/zoomlocked.png"
 import zoomIn from "../../assets/zoomin.png"
@@ -16,7 +16,6 @@ const Live2DModel: React.FunctionComponent = (props) => {
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0)
     const {model, setModel} = useContext(ModelContext)
     const {live2D, setLive2D} = useContext(Live2DContext)
-    const {defaultOpacities, setDefaultOpacities} = useContext(DefaultOpacitiesContext)
     const [controlHover, setControlHover] = useState(false)
     const [speed, setSpeed] = useState(1)
     const [paused, setPaused] = useState(false)
@@ -25,10 +24,11 @@ const Live2DModel: React.FunctionComponent = (props) => {
 
     const load = async () => {
         let cubismCorePath = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"
-        const live2DModel = new Live2DCubismModel(rendererRef.current!, {cubismCorePath})
+        const live2DModel = new Live2DCubismModel(rendererRef.current!, {cubismCorePath, 
+        randomMotion: false, autoInteraction: false, enableMotion: false, enableMovement: false,
+        lipsyncSmoothing: 0})
         await live2DModel.load(model)
         setLive2D(live2DModel)
-        setDefaultOpacities(structuredClone(live2DModel.parts.opacities))
     }
 
     useEffect(()=> {
@@ -39,7 +39,7 @@ const Live2DModel: React.FunctionComponent = (props) => {
         if (!live2D) return
         live2D.paused = paused
         live2D.speed = speed
-        live2D.enableZoom = enableZoom
+        live2D.zoomEnabled = enableZoom
         forceUpdate()
     }, [live2D, paused, speed, enableZoom])
 

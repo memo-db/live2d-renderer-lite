@@ -1,5 +1,5 @@
 import React, {useContext, useReducer, useEffect, useState} from "react"
-import {Live2DContext, DefaultOpacitiesContext} from "../demo"
+import {Live2DContext} from "../demo"
 import {MotionPriority} from "../../live2dcubism"
 import parametersIcon from "../../assets/parameters.png"
 import partsIcon from "../../assets/parts.png"
@@ -13,12 +13,12 @@ import "./styles/parameters.less"
 const Parameters: React.FunctionComponent = (props) => {
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0)
     const {live2D, setLive2D} = useContext(Live2DContext)
-    const {defaultOpacities, setDefaultOpacities} = useContext(DefaultOpacitiesContext)
-    const [expressionValues, setExpressionValues] = useState([] as boolean[])
+    const [defaultOpacities, setDefaultOpacities] = useState(new Float32Array())
     const [motionValues, setMotionValues] = useState([] as boolean[])
 
     useEffect(() => {
         if (live2D) {
+            setDefaultOpacities(structuredClone(live2D.parts.opacities))
             const loop = () => {
                 forceUpdate()
                 setTimeout(() => {
@@ -35,11 +35,7 @@ const Parameters: React.FunctionComponent = (props) => {
 
         let parameters = live2D.parameters
         const resetParameters = () => {
-            for (let i = 0; i < parameters.ids.length; i++) {
-                const defaultValue = parameters.defaultValues[i]
-                live2D.setParameter(i, defaultValue)
-            }
-            live2D.model.update()
+            live2D.resetParameters()
             forceUpdate()
         }
 
@@ -52,7 +48,7 @@ const Parameters: React.FunctionComponent = (props) => {
             const keys = parameters.keyValues[i]
             const step = (Math.abs(max - min) / 100) || 0.01
             const updateParameter = (value: number) => {
-                live2D.setParameter(i, value)
+                live2D.setParameter(id, value)
                 forceUpdate()
             }
             jsx.push(
@@ -83,11 +79,7 @@ const Parameters: React.FunctionComponent = (props) => {
 
         let parts = live2D.parts
         const resetParts = () => {
-            for (let i = 0; i < parts.ids.length; i++) {
-                const defaultValue = defaultOpacities[i] ?? 1
-                live2D.setPartOpacity(i, defaultValue)
-            }
-            live2D.model.update()
+            live2D.resetPartOpacities()
             forceUpdate()
         }
 
@@ -95,7 +87,7 @@ const Parameters: React.FunctionComponent = (props) => {
             const id = parts.ids[i]
             const opacity = parts.opacities[i]
             const updateOpacity = (opacity: number) => {
-                live2D.setPartOpacity(i, opacity)
+                live2D.setPartOpacity(id, opacity)
                 forceUpdate()
             }
             jsx.push(

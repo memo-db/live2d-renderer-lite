@@ -78,7 +78,7 @@ export interface Live2DModelOptions {
     // The step used for zooming, should be pretty small like 0.005.
     zoomStep?: number = 0.005
     // Whether zooming in with the mouse wheel should be allowed.
-    enableZoom?: boolean = true
+    zoomEnabled?: boolean = true
     // Whether panning by dragging should be allowed.
     enablePan?: boolean = true
     // Logical left value of the view matrix.
@@ -89,6 +89,8 @@ export interface Live2DModelOptions {
     checkMocConsistency?: boolean = true
     // Whether textures have premultiplied alpha.
     premultipliedAlpha?: boolean = true
+    // The smoothing factor of the lip sync.
+    lipSyncSmoothing?: number = 0.1
     // You can toggle various features in the animation loop.
     enablePhysics?: boolean = true
     enableEyeblink?: boolean = true
@@ -130,13 +132,13 @@ const parts = model.parts
 const drawables = model.drawables
 
 // Get parameter value
-model.getParameterValue(1)
+model.getParameterValue("ParamAngleX")
 // Set parameters
-model.setParameter(1, 30)
+model.setParameter("ParamAngleX", 30)
 // Get part opacity
-model.getPartOpacity(1)
+model.getPartOpacity("PartCheek")
 // Set part opacity
-model.setPartOpacity(1, 0.5)
+model.setPartOpacity("PartCheek", 0.5)
 ```
 
 ### Motions and Expressions
@@ -162,20 +164,24 @@ model.motions
 model.expressions
 ```
 
-### Physics, Eyeblink, Breath, Lipsync, etc.
+### Lipsync
 
-All of these will play automatically if you have enabled animation. So if you don't want that, you 
-should disable it and manage them directly on the model.
+Some motions contain their own audio which will sync their lips automatically. You can also 
+pass in an audio input to the model (wav/mp3 arraybuffer).
 
 ```ts
-// Physics
-model.physics
-// Breath
-model.breath
-// Eyeblink
-model.eyeBlink
-// Lip sync id's
-model.lipSyncIds
+// Lip sync smoothing factor, 0 would move the lips abruptly.
+model.lipsyncSmoothing = 0.1
+// Input audio
+model.inputAudio(audioArrayBuffer)
+```
+
+### Events
+
+```ts
+model.on("hit", (hitAreas: string[], x: number, y: number) => {
+  console.log("Hit!")
+})s
 ```
 
 ### Licenses

@@ -1,6 +1,6 @@
 {
   "name": "live2d-renderer",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "An easy and simple to use Live2D model renderer in the browser.",
   "main": "build/live2dcubism.js",
   "types": "build/live2dcubism.d.ts",
@@ -76,7 +76,6 @@
     "webpack-node-externals": "^2.5.2"
   },
   "dependencies": {
-    "jszip": "^3.10.1",
-    "wav-file-decoder": "^1.0.3"
+    "jszip": "^3.10.1"
   }
 }

@@ -34,12 +34,13 @@ export interface Live2DModelOptions {
     maxScale?: number
     panSpeed?: number
     zoomStep?: number
-    enableZoom?: boolean
+    zoomEnabled?: boolean
     enablePan?: boolean
     logicalLeft?: number
     logicalRight?: number
     checkMocConsistency?: boolean
     premultipliedAlpha?: boolean
+    lipsyncSmoothing?: number
     enablePhysics?: boolean
     enableEyeblink?: boolean
     enableBreath?: boolean
@@ -67,9 +68,14 @@ export enum MotionPriority {
     Force
 }
 
+type EventMap = {
+    hit: (hitAreas: string[], x: number, y: number) => void
+}
+
 let id = null
 
 export class Live2DCubismModel extends Live2DCubismUserModel {
+    private events: {[event: string]: Function[]} = {}
     public buffers: Live2DBuffers
     public motions: csmMap<string, ACubismMotion>
     public expressions: csmMap<string, ACubismMotion>
@@ -77,7 +83,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public eyeBlinkIds: csmVector<CubismIdHandle>
     public lipSyncIds: csmVector<CubismIdHandle>
     public settings: ICubismModelSetting
-    public totalMotionCount: number
     public viewMatrix: CubismViewMatrix
     public projection: CubismMatrix44
     public deviceToScreen: CubismMatrix44
@@ -87,7 +92,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public lastFrame: DOMHighResTimeStamp
     public queueManager: CubismMotionQueueManager
     public paused: boolean
-    public needsResize: boolean
     public premultipliedAlpha: boolean
     public cubismCorePath: string
     public autoAnimate: boolean
@@ -112,15 +116,36 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public enableMovement: boolean
     public enablePose: boolean
     public size: number
-    public loaded: boolean
-    public cubismLoaded: boolean
+    public totalMotionCount: number = 0
+    public needsResize: boolean = false
+    public loaded: boolean = false
+    public cubismLoaded: boolean = false
 
-    get enableZoom() {
-        return this.cameraController.enableZoom
+    public on<K extends keyof EventMap>(event: K, listener: EventMap[K]) {
+        if (!this.events[event]) {
+            this.events[event] = []
+        }
+        this.events[event].push(listener)
     }
 
-    set enableZoom(enableZoom) {
-        this.cameraController.enableZoom = enableZoom
+    public emit<K extends keyof EventMap>(event: K, ...args: Parameters<EventMap[K]>) {
+        if (this.events[event]) {
+            this.events[event].forEach(listener => listener(...args))
+        }
+    }
+
+    public off<K extends keyof EventMap>(event: K, listener: EventMap[K]) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event].filter(l => l !== listener)
+        }
+    }
+
+    get zoomEnabled() {
+        return this.cameraController.zoomEnabled
+    }
+
+    set zoomEnabled(zoomEnabled) {
+        this.cameraController.zoomEnabled = zoomEnabled
     }
 
     get minScale() {
@@ -179,11 +204,18 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.y = y
     }
 
+    get lipsyncSmoothing() {
+        return this.wavController.smoothingFactor
+    }
+
+    set lipsyncSmoothing(lipsyncSmoothing) {
+        this.wavController.smoothingFactor = lipsyncSmoothing
+    }
+
     public constructor(canvas: HTMLCanvasElement, options?: Live2DModelOptions) {
         if (!options) options = {}
         super()
-        this.cubismLoaded = false
-        this.loaded = false
+        this.canvas = canvas
         this.motions = new csmMap<string, ACubismMotion>()
         this.expressions = new csmMap<string, ACubismMotion>()
         this.textures = new csmVector<WebGLTexture>()
@@ -193,9 +225,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.projection = new CubismMatrix44()
         this.deviceToScreen = new CubismMatrix44()
         this.queueManager = new CubismMotionQueueManager()
-        this.totalMotionCount = 0
-        this.canvas = canvas
-        this.needsResize = false
         this.cubismCorePath = options.cubismCorePath ?? "live2dcubismcore.min.js"
         this.mocConsistency = options.checkMocConsistency ?? true
         this.premultipliedAlpha = options.premultipliedAlpha ?? true
@@ -213,12 +242,13 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.expressionController = new ExpressionController(this)
         this.cameraController = new CameraController(this.canvas)
         this.webGLRenderer = new WebGLRenderer(this)
-        this.cameraController.enableZoom = options.enableZoom ?? true
+        this.cameraController.zoomEnabled = options.zoomEnabled ?? true
         this.cameraController.enablePan = options.enablePan ?? true
         this.cameraController.minScale = options.minScale ?? 0.1
         this.cameraController.maxScale = options.maxScale ?? 10
         this.cameraController.panSpeed = options.panSpeed ?? 1.5
         this.cameraController.zoomStep = options.zoomStep ?? 0.005
+        this.wavController.smoothingFactor = options.lipsyncSmoothing ?? 0.1
         this.enablePhysics = options.enablePhysics ?? true
         this.enableBreath = options.enableBreath ?? true
         this.enableEyeblink = options.enableEyeblink ?? true
@@ -363,7 +393,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         const {modelBuffer, physicsBuffer, poseBuffer, userDataBuffer} = await this.loadBuffers(link)
 
         this.loadModel(modelBuffer, this._mocConsistency)
-        this.model.initialize()
+        this.initialize()
 
         await this.expressionController.load()
 
@@ -559,7 +589,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 let value = this.wavController.getRms()
         
                 for (let i = 0; i < this.lipSyncIds.getSize(); ++i) {
-                    this.model.addParameterValueById(this.lipSyncIds.at(i), value, 0.8)
+                    const parameterIndex = this.model.getParameterIndex(this.lipSyncIds.at(i))
+                    const minValue = this.model.getParameterMinimumValue(parameterIndex)
+                    const maxValue = this.model.getParameterMaximumValue(parameterIndex)
+                    const scaledValue = minValue + (maxValue - minValue) * value
+                    this.model.addParameterValueById(this.lipSyncIds.at(i), scaledValue, 0.8)
                 }
             }
         
@@ -627,6 +661,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
     public setRandomExpression = () => {
         return this.expressionController.setRandomExpression()
+    }
+
+    public inputAudio = (wavBuffer: ArrayBuffer) => {
+        this.wavController.start(wavBuffer)
     }
 
     public hitTest = (areaName: string, x: number, y: number) => {

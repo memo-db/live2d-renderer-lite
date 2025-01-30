@@ -13,7 +13,6 @@ export class MotionController {
     public load = async () => {
         const {motionGroups} = this.model.buffers
 
-        this.model.model.saveParameters()
         for (let i = 0; i < motionGroups.length; i++) {
             const group = motionGroups[i].group
             const motionBuffers = motionGroups[i].motionData.motionBuffers
@@ -36,24 +35,23 @@ export class MotionController {
             }
         }
         this.model.motionManager.stopAllMotions()
-        this.model.model.loadParameters()
     }
 
     public update = (deltaTime: DOMHighResTimeStamp) => {
         let motionUpdated = false
-        if (this.model.enableMotion) {
-            this.model.model.loadParameters()
-            if (this.model.motionManager.isFinished()) {
+        this.model.model.loadParameters()
+        if (this.model.motionManager.isFinished()) {
+            if (this.model.enableMotion) {
                 if (this.model.randomMotion) {
                     this.startRandomMotion(null, MotionPriority.Idle)
                 } else {
                     this.startMotion("Idle", 1, MotionPriority.Idle)
                 }
-            } else {
-                motionUpdated = this.model.motionManager.updateMotion(this.model.model, deltaTime)
             }
-            this.model.model.saveParameters()
+        } else {
+            motionUpdated = this.model.motionManager.updateMotion(this.model.model, deltaTime)
         }
+        this.model.model.saveParameters()
         return motionUpdated
     }
 
@@ -64,7 +62,7 @@ export class MotionController {
     public startMotion = async (group: string, i: number, priority: number, onStartMotion?: BeganMotionCallback, 
         onEndMotion?: FinishedMotionCallback): Promise<CubismMotionQueueEntryHandle> => {
         if (priority === MotionPriority.Force) {
-          this.model.motionManager.setReservePriority(priority)
+            this.model.motionManager.setReservePriority(priority)
         } else if (!this.model.motionManager.reserveMotion(priority)) {
           return InvalidMotionQueueEntryHandleValue
         }

@@ -66,11 +66,23 @@ export class TouchController {
         this.model.setDragging(0, 0)
         const x = this.model.transformX(posX)
         const y = this.model.transformY(posY)
+    }
+
+    public tap = (x: number, y: number) => {
         if (this.model.hitTest("Head", x, y)) {
             this.model.setRandomExpression()
         } else if (this.model.hitTest("Body", x, y)) {
             this.model.startRandomMotion("TapBody", MotionPriority.Normal)
         }
+
+        let hitAreas = [] as string[]
+        for (let i = 0; i < this.model.settings.getHitAreasCount(); i++) {
+            const drawId = this.model.settings.getHitAreaId(i)
+            if (this.model.isHit(drawId, x, y)) {
+                hitAreas.push(drawId.getString().s)
+            }
+        }
+        this.model.emit("hit", hitAreas, x, y)
     }
 
     public startInteractions = () => {

@@ -9,7 +9,7 @@ export class CameraController {
     public panSpeed: number
     public isPanning: boolean
     public lastPosition: {x: number, y: number}
-    public enableZoom: boolean
+    public zoomEnabled: boolean
     public enablePan: boolean
 
     constructor(canvas: HTMLCanvasElement) {
@@ -27,7 +27,7 @@ export class CameraController {
     }
 
     public zoomIn = (factor = 0.1) => {
-        if (!this.enableZoom) return
+        if (!this.zoomEnabled) return
         const zoomFactor = 1 + factor
         const newScale = Math.min(this.scale * zoomFactor, this.maxScale)
         const offsetX = this.x / this.scale
@@ -38,7 +38,7 @@ export class CameraController {
     }
 
     public zoomOut = (factor = 0.1) => {
-        if (!this.enableZoom) return
+        if (!this.zoomEnabled) return
         const zoomFactor = 1 - factor
         const newScale = Math.max(this.scale * zoomFactor, this.minScale)
         const offsetX = this.x / this.scale
@@ -73,7 +73,7 @@ export class CameraController {
     }
 
     public handleWheel = (event: WheelEvent) => {
-        if (!this.enableZoom) return
+        if (!this.zoomEnabled) return
         event.preventDefault()
         const delta = event.deltaY
         const scaleFactor = Math.pow(2, -delta * this.zoomStep)
@@ -88,7 +88,7 @@ export class CameraController {
             this.isPanning = false
             this.lastPosition = {x: 0, y: 0}
         }
-        if (this.enableZoom) {
+        if (this.zoomEnabled) {
             this.scale = 1
         }
     }

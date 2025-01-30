@@ -1,8 +1,16 @@
 import {CubismUserModel} from "../framework/src/model/cubismusermodel"
 
 export class Live2DCubismUserModel extends CubismUserModel {
+    public defaultPartOpacities: Float32Array
+
     constructor() {
         super()
+    }
+
+    public initialize () {
+        this.model.initialize()
+        // @ts-ignore
+        this.defaultPartOpacities = structuredClone(this.parts.opacities)
     }
 
     get accelerationX() {
@@ -188,12 +196,21 @@ export class Live2DCubismUserModel extends CubismUserModel {
         opacities: Float32Array, types: Int32Array, values: Float32Array}
     }
 
-    public getParameterValue = (index: number) => {
+    public getParameterValue = (parameter: string) => {
+        const index = this.parameters.ids.indexOf(parameter)
         return this.model.getParameterValueByIndex(index)
     }
 
-    public setParameter = (index: number, value: number) => {
+    public setParameter = (parameter: string, value: number) => {
+        const index = this.parameters.ids.indexOf(parameter)
         this.model.setParameterValueByIndex(index, value)
+        this.model.update()
+    }
+
+    public resetParameters = () => {
+        for (let i = 0; i < this.parameters.defaultValues.length; i++) {
+            this.model.setParameterValueByIndex(i, this.parameters.defaultValues[i])
+        }
         this.model.update()
     }
 
@@ -203,12 +220,21 @@ export class Live2DCubismUserModel extends CubismUserModel {
         opacities: Float32Array, parentIndices: Float32Array}
     }
 
-    public getPartOpacity = (index: number) => {
+    public getPartOpacity = (part: string) => {
+        const index = this.parts.ids.indexOf(part)
         return this.model.getPartOpacityByIndex(index)
     }
 
-    public setPartOpacity = (index: number, opacity: number) => {
+    public setPartOpacity = (part: string, opacity: number) => {
+        const index = this.parts.ids.indexOf(part)
         this.model.setPartOpacityByIndex(index, opacity)
+        this.model.update()
+    }
+
+    public resetPartOpacities = () => {
+        for (let i = 0; i < this.defaultPartOpacities.length; i++) {
+            this.model.setPartOpacityByIndex(i, this.defaultPartOpacities[i])
+        }
         this.model.update()
     }
 
