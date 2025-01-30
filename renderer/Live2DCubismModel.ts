@@ -20,7 +20,7 @@ import {ExpressionController} from "./ExpressionController"
 import {CameraController} from "./CameraController"
 import {WebGLRenderer} from "./WebGLRenderer"
 import fileType from "magic-bytes.js"
-import JSZip, { file } from "jszip"
+import JSZip from "jszip"
 import path from "path"
 
 export interface Live2DModelOptions {
