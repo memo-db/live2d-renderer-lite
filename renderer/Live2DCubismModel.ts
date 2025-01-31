@@ -269,7 +269,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.touchController = new TouchController(this)
         this.motionController = new MotionController(this)
         this.expressionController = new ExpressionController(this)
-        this.cameraController = new CameraController(this.canvas)
+        this.cameraController = new CameraController(this)
         this.webGLRenderer = new WebGLRenderer(this)
         this.cameraController.zoomEnabled = options.zoomEnabled ?? true
         this.cameraController.enablePan = options.enablePan ?? true
@@ -491,6 +491,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.webGLRenderer.start()
         this.resize()
         this.animationLoop()
+        this.centerModel()
     }
 
     public loadTextures = async () => {
@@ -733,9 +734,23 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         return this.viewMatrix.invertTransformY(screenY)
     }
 
-    public takeScreenshot = async (format: string = "png") => {
+    public takeScreenshot = async (format: string = "png", faceCrop = false) => {
+        this.centerModel()
         this.update()
-        return this.canvas.toDataURL(`image/${format}`)
+        if (faceCrop) {
+            const clonedCanvas = document.createElement("canvas")
+            const cropSize = this.canvas.width / 4
+            clonedCanvas.width = cropSize
+            clonedCanvas.height = cropSize
+
+            const ctx = clonedCanvas.getContext("2d")
+            const startX = (this.canvas.width - cropSize) / 2
+            ctx.drawImage(this.canvas, startX, 0, cropSize, cropSize, 0, 0, cropSize, cropSize)
+
+            return clonedCanvas.toDataURL(`image/${format}`)
+        } else {
+            return this.canvas.toDataURL(`image/${format}`)
+        }
     }
 
     public zoomIn = (factor = 0.1) => {
@@ -744,5 +759,36 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
     public zoomOut = (factor = 0.1) => {
         return this.cameraController.zoomOut(factor)
+    }
+
+    public centerModel = () => {
+        const savedX = this.x
+        const savedScale = this.scale
+        this.x = 0
+        this.y = 0
+        this.scale = 1
+        this.update()
+        const clonedCanvas = document.createElement("canvas")
+        clonedCanvas.width = this.width
+        clonedCanvas.height = this.height
+        const ctx = clonedCanvas.getContext("2d")
+        ctx.drawImage(this.canvas, 0, 0, clonedCanvas.width, clonedCanvas.height)
+        const imageData = ctx.getImageData(0, 0, clonedCanvas.width, clonedCanvas.height).data
+        let firstNonTransparentY = clonedCanvas.height
+        
+        for (let y = 0; y < clonedCanvas.height; y++) {
+          for (let x = 0; x < clonedCanvas.width; x++) {
+            if (imageData[(y * clonedCanvas.width + x) * 4 + 3] !== 0) {
+              firstNonTransparentY = y
+              break
+            }
+          }
+          if (firstNonTransparentY !== clonedCanvas.height) break
+        }
+        
+        let ratio = (firstNonTransparentY / clonedCanvas.height)
+        this.x = savedX
+        this.y = -ratio * 1.8
+        this.scale = savedScale
     }
 }

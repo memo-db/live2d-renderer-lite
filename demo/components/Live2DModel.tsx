@@ -27,6 +27,9 @@ const Live2DModel: React.FunctionComponent = (props) => {
         const live2DModel = new Live2DCubismModel(rendererRef.current!, {cubismCorePath})
         await live2DModel.load(model)
         setLive2D(live2DModel)
+        const snapshot = await live2DModel.takeScreenshot("png", true)
+        const buf = await fetch(snapshot).then((r) => r.blob())
+        console.log(URL.createObjectURL(buf))
     }
 
     useEffect(()=> {

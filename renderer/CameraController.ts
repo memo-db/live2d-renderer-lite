@@ -1,5 +1,7 @@
+import {Live2DCubismModel} from "./Live2DCubismModel"
+
 export class CameraController {
-    public canvas: HTMLCanvasElement
+    public model: Live2DCubismModel
     public x: number
     public y: number
     public scale: number
@@ -12,8 +14,8 @@ export class CameraController {
     public zoomEnabled: boolean
     public enablePan: boolean
 
-    constructor(canvas: HTMLCanvasElement) {
-        this.canvas = canvas
+    constructor(model: Live2DCubismModel) {
+        this.model = model
         this.x = 0
         this.y = 0
         this.scale = 1
@@ -60,8 +62,8 @@ export class CameraController {
             const dx = event.clientX - this.lastPosition.x
             const dy = event.clientY - this.lastPosition.y
 
-            this.x -= dx * this.panSpeed / this.canvas.width
-            this.y += dy * this.panSpeed / this.canvas.height
+            this.x -= dx * this.panSpeed / this.model.canvas.width
+            this.y += dy * this.panSpeed / this.model.canvas.height
 
             this.lastPosition = {x: event.clientX, y: event.clientY}
         }
@@ -87,6 +89,7 @@ export class CameraController {
             this.y = 0
             this.isPanning = false
             this.lastPosition = {x: 0, y: 0}
+            this.model.centerModel()
         }
         if (this.zoomEnabled) {
             this.scale = 1
@@ -94,20 +97,20 @@ export class CameraController {
     }
 
     public addListeners = () => {
-        this.canvas.addEventListener("wheel", this.handleWheel)
-        this.canvas.addEventListener("mousedown", this.handleMouseDown)
+        this.model.canvas.addEventListener("wheel", this.handleWheel)
+        this.model.canvas.addEventListener("mousedown", this.handleMouseDown)
         window.addEventListener("mousemove", this.handleMouseMove)
         window.addEventListener("mouseup", this.handleMouseUp)
-        this.canvas.addEventListener("dblclick", this.handleDoubleClick)
-        this.canvas.addEventListener("contextmenu", (event) => event.preventDefault())
+        this.model.canvas.addEventListener("dblclick", this.handleDoubleClick)
+        this.model.canvas.addEventListener("contextmenu", (event) => event.preventDefault())
     }
 
     public removeListeners = () => {
-        this.canvas.removeEventListener("wheel", this.handleWheel)
-        this.canvas.removeEventListener("mousedown", this.handleMouseDown)
+        this.model.canvas.removeEventListener("wheel", this.handleWheel)
+        this.model.canvas.removeEventListener("mousedown", this.handleMouseDown)
         window.removeEventListener("mousemove", this.handleMouseMove)
         window.removeEventListener("mouseup", this.handleMouseUp)
-        this.canvas.removeEventListener("dblclick", this.handleDoubleClick)
-        this.canvas.removeEventListener("contextmenu", (event) => event.preventDefault())
+        this.model.canvas.removeEventListener("dblclick", this.handleDoubleClick)
+        this.model.canvas.removeEventListener("contextmenu", (event) => event.preventDefault())
     }
 }
