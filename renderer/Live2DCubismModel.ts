@@ -36,6 +36,8 @@ export interface Live2DModelOptions {
     maxScale?: number
     panSpeed?: number
     zoomStep?: number
+    x?: number
+    y?: number
     zoomEnabled?: boolean
     enablePan?: boolean
     logicalLeft?: number
@@ -251,7 +253,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.projection = new CubismMatrix44()
         this.deviceToScreen = new CubismMatrix44()
         this.queueManager = new CubismMotionQueueManager()
-        this.cubismCorePath = options.cubismCorePath ?? "live2dcubismcore.min.js"
+        this.cubismCorePath = options.cubismCorePath ?? "/live2dcubismcore.min.js"
         this.mocConsistency = options.checkMocConsistency ?? true
         this.premultipliedAlpha = options.premultipliedAlpha ?? true
         this.logicalLeft = options.logicalLeft ?? -2
@@ -275,6 +277,9 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.maxScale = options.maxScale ?? 10
         this.cameraController.panSpeed = options.panSpeed ?? 1.5
         this.cameraController.zoomStep = options.zoomStep ?? 0.005
+        this.cameraController.scale = options.scale ?? 1
+        this.cameraController.x = options.x ?? 0
+        this.cameraController.y = options.y ?? 0
         this.wavController.smoothingFactor = options.lipsyncSmoothing ?? 0.1
         this.enablePhysics = options.enablePhysics ?? true
         this.enableBreath = options.enableBreath ?? true

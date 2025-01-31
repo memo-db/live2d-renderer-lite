@@ -67,7 +67,7 @@ export interface Live2DModelOptions {
     paused?: boolean = false
     // The speed of the animation eg. 0.5 is half as fast.
     speed?: number = 1
-    // The current scale of the model, aka the zoom factor.
+    // The starting scale of the model, aka the zoom factor.
     scale?: number = 1
     // The lowest scale/zoom that should be allowed.
     minScale?: number = 0.1
@@ -81,6 +81,10 @@ export interface Live2DModelOptions {
     zoomEnabled?: boolean = true
     // Whether panning by dragging should be allowed.
     enablePan?: boolean = true
+    // Set the starting x-position. Note: it's a ratio pixels/canvas.width
+    x?: number = 0
+    // Set the starting y-position. Note: it's a ratio pixels/canvas.height
+    y?: number = 0
     // Logical left value of the view matrix.
     logicalLeft?: number = -2
     // Logical right value of the view matrix.
