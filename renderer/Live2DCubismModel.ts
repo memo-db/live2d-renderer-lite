@@ -77,10 +77,8 @@ type EventMap = {
 
 let id = null
 
-export const isLive2DZip = async (link: string) => {
-    let isZip = path.extname(link).replace(".", "") === "zip"
-    const arrayBuffer = await fetch(link).then(r => r.arrayBuffer())
-
+export const isLive2DZip = async (arrayBuffer: ArrayBuffer) => {
+    let isZip = false
     const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
     if (result.mime === "application/zip") isZip = true
     if (!isZip) return false
