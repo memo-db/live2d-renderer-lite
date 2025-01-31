@@ -13,6 +13,7 @@ export class CameraController {
     public lastPosition: {x: number, y: number}
     public zoomEnabled: boolean
     public enablePan: boolean
+    public doubleClickReset: boolean
 
     constructor(model: Live2DCubismModel) {
         this.model = model
@@ -84,15 +85,13 @@ export class CameraController {
     }
 
     public handleDoubleClick = () => {
-        if (this.enablePan) {
+        if (this.doubleClickReset) {
             this.x = 0
             this.y = 0
             this.isPanning = false
             this.lastPosition = {x: 0, y: 0}
-            this.model.centerModel()
-        }
-        if (this.zoomEnabled) {
             this.scale = 1
+            this.model.centerModel()
         }
     }
 

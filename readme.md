@@ -81,6 +81,8 @@ export interface Live2DModelOptions {
     zoomEnabled?: boolean = true
     // Whether panning by dragging should be allowed.
     enablePan?: boolean = true
+    // Reset the zoom/pan on double click.
+    doubleClickReset?: boolean = true
     // Set the starting x-position. Note: it's a ratio pixels/canvas.width
     x?: number = 0
     // Set the starting y-position. Note: it's a ratio pixels/canvas.height

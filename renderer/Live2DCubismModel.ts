@@ -39,6 +39,7 @@ export interface Live2DModelOptions {
     x?: number
     y?: number
     zoomEnabled?: boolean
+    doubleClickReset?: boolean
     enablePan?: boolean
     logicalLeft?: number
     logicalRight?: number
@@ -240,6 +241,14 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.wavController.smoothingFactor = lipsyncSmoothing
     }
 
+    get doubleClickReset() {
+        return this.cameraController.doubleClickReset
+    }
+
+    set doubleClickReset(doubleClickReset) {
+        this.cameraController.doubleClickReset = doubleClickReset
+    }
+
     public constructor(canvas: HTMLCanvasElement, options?: Live2DModelOptions) {
         if (!options) options = {}
         super()
@@ -273,6 +282,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.webGLRenderer = new WebGLRenderer(this)
         this.cameraController.zoomEnabled = options.zoomEnabled ?? true
         this.cameraController.enablePan = options.enablePan ?? true
+        this.cameraController.doubleClickReset = options.doubleClickReset ?? true
         this.cameraController.minScale = options.minScale ?? 0.1
         this.cameraController.maxScale = options.maxScale ?? 10
         this.cameraController.panSpeed = options.panSpeed ?? 1.5
@@ -575,7 +585,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public update = () => {
-        if (this.webGLRenderer.contextLost()) return
+        if (!this.model || this.webGLRenderer.contextLost()) return
 
         this.updateTime()
         this.updateCamera()
