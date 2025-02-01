@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState, useContext, useReducer} from "react"
-import {ModelContext, Live2DContext} from "../demo"
+import {ModelContext, AudioContext, Live2DContext} from "../demo"
 import zoomLock from "../../assets/zoomlock.png"
 import zoomLocked from "../../assets/zoomlocked.png"
 import zoomIn from "../../assets/zoomin.png"
@@ -12,9 +12,12 @@ import play from "../../assets/play.png"
 import {Live2DCubismModel} from "../../live2dcubism"
 import "./styles/live2dmodel.less"
 
+const audioContext = new window.AudioContext()
+
 const Live2DModel: React.FunctionComponent = (props) => {
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0)
     const {model, setModel} = useContext(ModelContext)
+    const {audio, setAudio} = useContext(AudioContext)
     const {live2D, setLive2D} = useContext(Live2DContext)
     const [controlHover, setControlHover] = useState(false)
     const [speed, setSpeed] = useState(1)
@@ -35,6 +38,16 @@ const Live2DModel: React.FunctionComponent = (props) => {
     useEffect(()=> {
         load()
     }, [model])
+
+    const loadAudio = async () => {
+        if (!live2D || !audio) return
+        const arrayBuffer = await fetch(audio).then((r) => r.arrayBuffer())
+        live2D.inputAudio(arrayBuffer, true)
+    }
+
+    useEffect(() => {
+        loadAudio()
+    }, [live2D, audio])
 
     useEffect(() => {
         if (!live2D) return

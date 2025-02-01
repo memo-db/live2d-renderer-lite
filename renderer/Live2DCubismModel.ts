@@ -41,8 +41,6 @@ export interface Live2DModelOptions {
     zoomEnabled?: boolean
     doubleClickReset?: boolean
     enablePan?: boolean
-    logicalLeft?: number
-    logicalRight?: number
     checkMocConsistency?: boolean
     premultipliedAlpha?: boolean
     lipsyncSmoothing?: number
@@ -129,6 +127,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public speed: number
     public logicalLeft: number
     public logicalRight: number
+    public logicalBottom: number
+    public logicalTop: number
     public wavController: WavFileController
     public touchController: TouchController
     public motionController: MotionController
@@ -265,8 +265,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cubismCorePath = options.cubismCorePath ?? "/live2dcubismcore.min.js"
         this.mocConsistency = options.checkMocConsistency ?? true
         this.premultipliedAlpha = options.premultipliedAlpha ?? true
-        this.logicalLeft = options.logicalLeft ?? -2
-        this.logicalRight = options.logicalRight ?? 2
         this.autoAnimate = options.autoAnimate ?? true
         this.autoInteraction = options.autoInteraction ?? true
         this.keepAspect = options.keepAspect ?? false
@@ -285,11 +283,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.doubleClickReset = options.doubleClickReset ?? true
         this.cameraController.minScale = options.minScale ?? 0.1
         this.cameraController.maxScale = options.maxScale ?? 10
-        this.cameraController.panSpeed = options.panSpeed ?? 1.5
+        this.cameraController.panSpeed = options.panSpeed ?? 1
         this.cameraController.zoomStep = options.zoomStep ?? 0.005
         this.cameraController.scale = options.scale ?? 1
-        this.cameraController.x = options.x ?? 0
-        this.cameraController.y = options.y ?? 0
+        this.cameraController.x = options.x ?? this.canvas.width / 2
+        this.cameraController.y = options.y ?? this.canvas.height / 2
         this.wavController.smoothingFactor = options.lipsyncSmoothing ?? 0.1
         this.enablePhysics = options.enablePhysics ?? true
         this.enableBreath = options.enableBreath ?? true
@@ -531,29 +529,28 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
             this.canvas.height = this.canvas.clientHeight ? this.canvas.clientHeight : this.canvas.height
         }
 
-        const {width, height} = this.canvas
-        const ratio = width / height
-        const left = -ratio
-        const right = ratio
-        const bottom = -1
-        const top = 1
+        const aspectRatio = this.canvas.width / this.canvas.height
+        this.logicalLeft = -aspectRatio
+        this.logicalRight = aspectRatio
+        this.logicalBottom = -1
+        this.logicalTop = 1
 
-        this.viewMatrix.setScreenRect(left, right, bottom, top)
+        this.viewMatrix.setScreenRect(this.logicalLeft, this.logicalRight, this.logicalBottom, this.logicalTop)
         this.viewMatrix.scale(1, 1)
 
         this.deviceToScreen.loadIdentity()
-        if (width > height) {
-          const screenW = Math.abs(right - left)
-          this.deviceToScreen.scaleRelative(screenW / width, -screenW / width)
+        if (this.canvas.width > this.canvas.height) {
+          const screenW = Math.abs(this.logicalRight - this.logicalLeft)
+          this.deviceToScreen.scaleRelative(screenW / this.canvas.width, -screenW / this.canvas.width)
         } else {
-          const screenH = Math.abs(top - bottom)
-          this.deviceToScreen.scaleRelative(screenH / height, -screenH / height)
+          const screenH = Math.abs(this.logicalTop - this.logicalBottom)
+          this.deviceToScreen.scaleRelative(screenH / this.canvas.height, -screenH / this.canvas.height)
         }
-        this.deviceToScreen.translateRelative(-width * 0.5, -height * 0.5)
+        this.deviceToScreen.translateRelative(-this.canvas.width * 0.5, -this.canvas.height * 0.5)
 
         this.viewMatrix.setMinScale(this.minScale)
         this.viewMatrix.setMaxScale(this.maxScale)
-        this.viewMatrix.setMaxScreenRect(this.logicalLeft, this.logicalRight, this.logicalLeft, this.logicalRight)
+        this.viewMatrix.setMaxScreenRect(this.logicalLeft, this.logicalRight, this.logicalBottom, this.logicalTop)
     }
 
     public updateTime = () => {
@@ -564,7 +561,9 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
     public updateCamera = () => {
         const {x, y, scale} = this.cameraController
-        this.viewMatrix.translate(-x, -y)
+        const logicalX = this.logicalLeft + (x / this.canvas.width) * (this.logicalRight - this.logicalLeft)
+        const logicalY = this.logicalTop - (y / this.canvas.height) * (this.logicalTop - this.logicalBottom)
+        this.viewMatrix.translate(-logicalX, -logicalY)
         this.viewMatrix.scale(scale, scale)
     }
 
@@ -717,8 +716,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         return this.expressionController.setRandomExpression()
     }
 
-    public inputAudio = (wavBuffer: ArrayBuffer) => {
-        this.wavController.start(wavBuffer)
+    public inputAudio = (wavBuffer: ArrayBuffer, playAudio = false, volume = 1.0) => {
+        return this.wavController.start(wavBuffer, playAudio, volume)
     }
 
     public hitTest = (areaName: string, x: number, y: number) => {
@@ -775,33 +774,32 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public centerModel = () => {
-        const savedX = this.x
-        const savedScale = this.scale
-        this.x = 0
-        this.y = 0
-        this.scale = 1
+        this.x = this.canvas.width / 2
+        this.y = this.canvas.height / 2
         this.update()
         const clonedCanvas = document.createElement("canvas")
-        clonedCanvas.width = this.width
-        clonedCanvas.height = this.height
+        clonedCanvas.width = this.canvas.width
+        clonedCanvas.height = this.canvas.height
         const ctx = clonedCanvas.getContext("2d")
         ctx.drawImage(this.canvas, 0, 0, clonedCanvas.width, clonedCanvas.height)
         const imageData = ctx.getImageData(0, 0, clonedCanvas.width, clonedCanvas.height).data
+
         let firstNonTransparentY = clonedCanvas.height
+        let lastNonTransparentY = 0
         
         for (let y = 0; y < clonedCanvas.height; y++) {
-          for (let x = 0; x < clonedCanvas.width; x++) {
-            if (imageData[(y * clonedCanvas.width + x) * 4 + 3] !== 0) {
-              firstNonTransparentY = y
-              break
+            for (let x = 0; x < clonedCanvas.width; x++) {
+                if (imageData[(y * clonedCanvas.width + x) * 4 + 3] !== 0) {
+                    firstNonTransparentY = Math.min(firstNonTransparentY, y)
+                    lastNonTransparentY = Math.max(lastNonTransparentY, y)
+                }
             }
-          }
-          if (firstNonTransparentY !== clonedCanvas.height) break
         }
-        
-        let ratio = (firstNonTransparentY / clonedCanvas.height)
-        this.x = savedX
-        this.y = -ratio * 1.8
-        this.scale = savedScale
+
+        const characterHeight = lastNonTransparentY - firstNonTransparentY
+        let marginHeight = (this.canvas.height - characterHeight) / 4
+
+        const ratio = (firstNonTransparentY / clonedCanvas.height)
+        this.y += (ratio * this.canvas.height) - marginHeight
     }
 }

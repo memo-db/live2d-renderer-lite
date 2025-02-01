@@ -17,15 +17,15 @@ export class CameraController {
 
     constructor(model: Live2DCubismModel) {
         this.model = model
-        this.x = 0
-        this.y = 0
+        this.x = model.canvas.width / 2
+        this.y = model.canvas.height / 2
         this.scale = 1
         this.minScale = 0.1
         this.maxScale = 10
         this.isPanning = false
         this.lastPosition = {x: 0, y: 0}
         this.zoomStep = 0.005
-        this.panSpeed = 1.5
+        this.panSpeed = 1
         this.addListeners()
     }
 
@@ -63,8 +63,8 @@ export class CameraController {
             const dx = event.clientX - this.lastPosition.x
             const dy = event.clientY - this.lastPosition.y
 
-            this.x -= dx * this.panSpeed / this.model.canvas.width
-            this.y += dy * this.panSpeed / this.model.canvas.height
+            this.x -= dx * this.panSpeed
+            this.y -= dy * this.panSpeed
 
             this.lastPosition = {x: event.clientX, y: event.clientY}
         }
@@ -80,14 +80,24 @@ export class CameraController {
         event.preventDefault()
         const delta = event.deltaY
         const scaleFactor = Math.pow(2, -delta * this.zoomStep)
-        this.scale *= scaleFactor
-        this.scale = Math.max(this.minScale, Math.min(this.maxScale, this.scale))
+        const newScale = Math.max(this.minScale, Math.min(this.maxScale, this.scale * scaleFactor))
+
+        const bounds = this.model.canvas.getBoundingClientRect()
+        const mouseX = event.clientX - bounds.left
+        const mouseY = event.clientY - bounds.top
+
+        const worldX = (mouseX - this.x) / this.scale
+        const worldY = (mouseY - this.y) / this.scale
+
+        this.scale = newScale
+        //this.x = mouseX - worldX * newScale
+        //this.y = mouseY - worldY * newScale
     }
 
     public handleDoubleClick = () => {
         if (this.doubleClickReset) {
-            this.x = 0
-            this.y = 0
+            this.x = this.model.canvas.width / 2
+            this.y = this.model.canvas.height / 2
             this.isPanning = false
             this.lastPosition = {x: 0, y: 0}
             this.scale = 1

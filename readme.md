@@ -87,10 +87,6 @@ export interface Live2DModelOptions {
     x?: number = 0
     // Set the starting y-position. Note: it's a ratio pixels/canvas.height
     y?: number = 0
-    // Logical left value of the view matrix.
-    logicalLeft?: number = -2
-    // Logical right value of the view matrix.
-    logicalRight?: number = 2
     // Check moc consistency when loading the model.
     checkMocConsistency?: boolean = true
     // Whether textures have premultiplied alpha.

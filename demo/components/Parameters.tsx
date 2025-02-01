@@ -15,6 +15,8 @@ const Parameters: React.FunctionComponent = (props) => {
     const {live2D, setLive2D} = useContext(Live2DContext)
     const [defaultOpacities, setDefaultOpacities] = useState(new Float32Array())
     const [motionValues, setMotionValues] = useState([] as boolean[])
+    const [motionButtonHover, setMotionButtonHover] = useState(false)
+    const [motionMode, setMotionMode] = useState("auto")
 
     useEffect(() => {
         if (live2D) {
@@ -28,6 +30,19 @@ const Parameters: React.FunctionComponent = (props) => {
             loop()
         }
     }, [live2D])
+
+    const toggleMotionMode = () => {
+        if (motionMode === "auto") {
+            setMotionMode("manual")
+        } else {
+            setMotionMode("auto")
+        }
+    }
+
+    useEffect(() => {
+        if (!live2D) return
+        live2D.enableMotion = motionMode === "auto"
+    }, [motionMode])
 
     const getParameterDialogJSX = () => {
         if (!live2D) return null
@@ -173,6 +188,9 @@ const Parameters: React.FunctionComponent = (props) => {
                 <div className="parameters-dialog-row-center">
                     <img draggable={false} className="parameters-dialog-icon" src={motionIcon}/>
                     <span className="parameters-dialog-title">Motions</span>
+                </div>
+                <div className="parameters-dialog-row" style={{width: "max-content", marginLeft: "5px"}}>
+                    <button className="parameters-button" onClick={() => toggleMotionMode()}>{motionMode === "auto" ? "Auto" : "Manual"}</button>
                 </div>
                 {jsx}
             </div>
