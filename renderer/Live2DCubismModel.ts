@@ -720,6 +720,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         return this.wavController.start(wavBuffer, playAudio, volume)
     }
 
+    public stopAudio = () => {
+        return this.wavController.stop()
+    }
+
     public hitTest = (areaName: string, x: number, y: number) => {
         if (!this.loaded) return
         if (this.opacity < 1) return
