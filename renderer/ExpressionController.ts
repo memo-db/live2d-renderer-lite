@@ -1,7 +1,5 @@
-import {CubismMotionQueueEntryHandle, InvalidMotionQueueEntryHandleValue} from "../framework/src/motion/cubismmotionqueuemanager"
-import {ACubismMotion, FinishedMotionCallback, BeganMotionCallback} from "../framework/src/motion/acubismmotion"
-import {CubismMotion} from "../framework/src/motion/cubismmotion"
-import {Live2DCubismModel, MotionPriority} from "./Live2DCubismModel"
+import {ACubismMotion} from "../framework/src/motion/acubismmotion"
+import {Live2DCubismModel} from "./Live2DCubismModel"
 
 export class ExpressionController {
     public model: Live2DCubismModel

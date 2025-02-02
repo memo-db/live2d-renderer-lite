@@ -44,6 +44,9 @@ export interface Live2DModelOptions {
     checkMocConsistency?: boolean
     premultipliedAlpha?: boolean
     lipsyncSmoothing?: number
+    volume?: number
+    audioContext?: AudioContext
+    connectNode?: AudioNode
     maxTextureSize?: number
     enablePhysics?: boolean
     enableEyeblink?: boolean
@@ -129,6 +132,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public logicalRight: number
     public logicalBottom: number
     public logicalTop: number
+    public audioContext: AudioContext
+    public connectNode: AudioNode | null
     public wavController: WavFileController
     public touchController: TouchController
     public motionController: MotionController
@@ -241,6 +246,14 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.wavController.smoothingFactor = lipsyncSmoothing
     }
 
+    get volume() {
+        return this.wavController.volumeNode.gain.value
+    }
+
+    set volume(volume) {
+        this.wavController.volumeNode.gain.value = volume
+    }
+
     get doubleClickReset() {
         return this.cameraController.doubleClickReset
     }
@@ -271,8 +284,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.randomMotion = options.randomMotion ?? true
         this.paused = options.paused ?? false
         this.speed = options.speed ?? 1
+        this.audioContext = options.audioContext ?? new AudioContext()
         if (options.maxTextureSize) this.maxTextureSize = options.maxTextureSize
-        this.wavController = new WavFileController()
+        if (options.connectNode) this.connectNode = options.connectNode
+        this.wavController = new WavFileController(this)
         this.touchController = new TouchController(this)
         this.motionController = new MotionController(this)
         this.expressionController = new ExpressionController(this)
@@ -289,6 +304,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.x = options.x ?? this.canvas.width / 2
         this.cameraController.y = options.y ?? this.canvas.height / 2
         this.wavController.smoothingFactor = options.lipsyncSmoothing ?? 0.1
+        this.wavController.volumeNode.gain.value = options.volume ?? 1
         this.enablePhysics = options.enablePhysics ?? true
         this.enableBreath = options.enableBreath ?? true
         this.enableEyeblink = options.enableEyeblink ?? true
@@ -716,8 +732,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         return this.expressionController.setRandomExpression()
     }
 
-    public inputAudio = (wavBuffer: ArrayBuffer, playAudio = false, volume = 1.0) => {
-        return this.wavController.start(wavBuffer, playAudio, volume)
+    public inputAudio = (wavBuffer: ArrayBuffer, playAudio = false) => {
+        return this.wavController.start(wavBuffer, playAudio)
     }
 
     public stopAudio = () => {

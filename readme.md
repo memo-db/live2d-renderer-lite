@@ -93,6 +93,12 @@ export interface Live2DModelOptions {
     premultipliedAlpha?: boolean = true
     // The smoothing factor of the lip sync.
     lipSyncSmoothing?: number = 0.1
+    // Volume of audio (if enabling playback).
+    volume?: number = 1
+    // You may pass in your own AudioContext
+    audioContext?: AudioContext = new AudioContext()
+    // The first node the audio is connected to, defaults to GainNode
+    connectNode?: AudioNode = audioContext.createGain()
     // Maximum texture size. Must be a power of 2. Defaults to the WebGL max (usually 8192).
     maxTextureSize?: number = 8192
     // You can toggle various features in the animation loop.

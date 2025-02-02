@@ -1,4 +1,7 @@
+import {Live2DCubismModel} from "./Live2DCubismModel"
+
 export class WavFileController {
+    public model: Live2DCubismModel
     public samples: Float32Array[] | null
     public previousRms: number
     public rms: number
@@ -9,46 +12,47 @@ export class WavFileController {
     public sampleRate: number
     public samplesPerChannel: number
     public smoothingFactor: number
-    public audioContext: AudioContext
     public volumeNode: GainNode
     public sourceNode: AudioBufferSourceNode | null
 
-    constructor() {
+    constructor(model: Live2DCubismModel) {
+        this.model = model
         this.samples = null
         this.previousRms = 0
         this.rms = 0
         this.sampleOffset = 0
         this.userTime = 0
         this.smoothingFactor = 0.1
-        this.audioContext = new AudioContext()
         this.sourceNode = null
-        this.volumeNode = this.audioContext.createGain()
-        this.volumeNode.connect(this.audioContext.destination)
+        this.volumeNode = this.model.audioContext.createGain()
+        this.volumeNode.gain.value = 1
+        this.volumeNode.connect(this.model.audioContext.destination)
     }
 
-    public start = async (wavBuffer: ArrayBuffer, playAudio = false, volume = 1.0) => {
+    public start = async (wavBuffer: ArrayBuffer, playAudio = false) => {
         this.sampleOffset = 0
         this.userTime = 0
         this.previousRms = 0
         this.rms = 0
         const cloneBufer = wavBuffer.slice(0)
-        const decodedAudio = await this.audioContext.decodeAudioData(wavBuffer)
-        const cloneAudio = await this.audioContext.decodeAudioData(cloneBufer)
+        const decodedAudio = await this.model.audioContext.decodeAudioData(wavBuffer)
+        const cloneAudio = await this.model.audioContext.decodeAudioData(cloneBufer)
         this.numChannels = decodedAudio.numberOfChannels
         this.sampleRate = decodedAudio.sampleRate
         this.samples = Array.from({length: this.numChannels}, (v, i) => decodedAudio.getChannelData(i))
         this.samplesPerChannel = decodedAudio.length
-        if (playAudio) await this.play(cloneAudio, volume)
-        return this.audioContext
+        if (playAudio) await this.play(cloneAudio)
     }
 
-    public play = async (audioBuffer: AudioBuffer, volume = 1.0) => {
+    public play = async (audioBuffer: AudioBuffer) => {
         this.stop()
-        this.sourceNode = this.audioContext.createBufferSource()
+        this.sourceNode = this.model.audioContext.createBufferSource()
         this.sourceNode.buffer = audioBuffer
-        this.sourceNode.connect(this.audioContext.destination)
-        this.volumeNode.gain.value = volume
-        this.sourceNode.connect(this.volumeNode)
+        if (this.model.connectNode) {
+            this.sourceNode.connect(this.model.connectNode)
+        } else {
+            this.sourceNode.connect(this.volumeNode)
+        }
         this.sourceNode.start(this.userTime)
     }
 
