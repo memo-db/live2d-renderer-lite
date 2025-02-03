@@ -26,6 +26,7 @@ import path from "path"
 export interface Live2DModelOptions {
     autoAnimate?: boolean
     autoInteraction?: boolean
+    tapInteraction?: boolean
     randomMotion?: boolean
     keepAspect?: boolean
     cubismCorePath?: string
@@ -125,6 +126,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public cubismCorePath: string
     public autoAnimate: boolean
     public autoInteraction: boolean
+    public tapInteraction: boolean
     public randomMotion: boolean
     public keepAspect: boolean
     public speed: number
@@ -280,6 +282,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.premultipliedAlpha = options.premultipliedAlpha ?? true
         this.autoAnimate = options.autoAnimate ?? true
         this.autoInteraction = options.autoInteraction ?? true
+        this.tapInteraction = options.tapInteraction ?? true
         this.keepAspect = options.keepAspect ?? false
         this.randomMotion = options.randomMotion ?? true
         this.paused = options.paused ?? false
@@ -546,10 +549,13 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
 
         const aspectRatio = this.canvas.width / this.canvas.height
-        this.logicalLeft = -aspectRatio
-        this.logicalRight = aspectRatio
-        this.logicalBottom = -1
-        this.logicalTop = 1
+        const logicalWidth = 2
+        const logicalHeight = 2 / aspectRatio
+
+        this.logicalLeft = -logicalWidth / 2
+        this.logicalRight = logicalWidth / 2
+        this.logicalBottom = -logicalHeight / 2
+        this.logicalTop = logicalHeight / 2
 
         this.viewMatrix.setScreenRect(this.logicalLeft, this.logicalRight, this.logicalBottom, this.logicalTop)
         this.viewMatrix.scale(1, 1)
@@ -579,18 +585,23 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         const {x, y, scale} = this.cameraController
         const logicalX = this.logicalLeft + (x / this.canvas.width) * (this.logicalRight - this.logicalLeft)
         const logicalY = this.logicalTop - (y / this.canvas.height) * (this.logicalTop - this.logicalBottom)
-        this.viewMatrix.translate(-logicalX, -logicalY)
+
+        const centerX = (this.logicalLeft + this.logicalRight) / 2
+        const centerY = (this.logicalTop + this.logicalBottom) / 2
+
+        this.viewMatrix.translate(centerX - logicalX, centerY - logicalY)
         this.viewMatrix.scale(scale, scale)
     }
 
     public updateProjection = () => {
         const {width, height} = this.canvas
         const projection = new CubismMatrix44()
+        const canvasAspect = width / height
         if (this.model.getCanvasWidth() > 1 && width < height) {
             this.modelMatrix.setWidth(2)
-            projection.scale(1, width / height)
+            projection.scale(1, canvasAspect)
         } else {
-            projection.scale(height / width, 1)
+            projection.scale(1 / canvasAspect, 1)
         }
 
         if (this.viewMatrix) {

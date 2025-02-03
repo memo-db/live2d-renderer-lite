@@ -57,6 +57,8 @@ export interface Live2DModelOptions {
     autoAnimate?: boolean = true
     // Toggle whether the pointer actions will begin automatically.
     autoInteraction?: boolean = true
+    // Toggle whether a motion will be played on tap.
+    tapInteraction?: boolean = true
     // Toggle whether you want it to play random motions, or just play the idle animation.
     randomMotion?: boolean = true
     // Resizes the aspect ratio of your canvas to match the model dimensions.

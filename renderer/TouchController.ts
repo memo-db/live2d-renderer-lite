@@ -66,6 +66,7 @@ export class TouchController {
         this.model.setDragging(0, 0)
         const x = this.model.transformX(posX)
         const y = this.model.transformY(posY)
+        if (this.model.tapInteraction) this.tap(x, y)
     }
 
     public tap = (x: number, y: number) => {

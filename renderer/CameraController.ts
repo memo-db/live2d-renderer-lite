@@ -33,22 +33,26 @@ export class CameraController {
         if (!this.zoomEnabled) return
         const zoomFactor = 1 + factor
         const newScale = Math.min(this.scale * zoomFactor, this.maxScale)
-        const offsetX = this.x / this.scale
-        const offsetY = this.x / this.scale
+
+        const worldX = (this.x - this.model.canvas.width / 2) / this.scale
+        const worldY = (this.y - this.model.canvas.height / 2) / this.scale
+
         this.scale = newScale
-        this.x = this.x - offsetX * newScale
-        this.y = this.y - offsetY * newScale
+        this.x = this.model.canvas.width / 2 + worldX * this.scale
+        this.y = this.model.canvas.height / 2 + worldY * this.scale
     }
 
     public zoomOut = (factor = 0.1) => {
         if (!this.zoomEnabled) return
         const zoomFactor = 1 - factor
         const newScale = Math.max(this.scale * zoomFactor, this.minScale)
-        const offsetX = this.x / this.scale
-        const offsetY = this.x / this.scale
+
+        const worldX = (this.x - this.model.canvas.width / 2) / this.scale
+        const worldY = (this.y - this.model.canvas.height / 2) / this.scale
+
         this.scale = newScale
-        this.x = this.x - offsetX * newScale
-        this.y = this.y - offsetY * newScale
+        this.x = this.model.canvas.width / 2 + worldX * this.scale
+        this.y = this.model.canvas.height / 2 + worldY * this.scale
     }
 
     public handleMouseDown = (event: MouseEvent) => {
@@ -80,18 +84,18 @@ export class CameraController {
         event.preventDefault()
         const delta = event.deltaY
         const scaleFactor = Math.pow(2, -delta * this.zoomStep)
-        const newScale = Math.max(this.minScale, Math.min(this.maxScale, this.scale * scaleFactor))
+        const newScale = Math.max(this.minScale, Math.min(this.scale * scaleFactor, this.maxScale))
 
         const bounds = this.model.canvas.getBoundingClientRect()
-        const mouseX = event.clientX - bounds.left
-        const mouseY = event.clientY - bounds.top
-
+        const mouseX = bounds.width - (event.clientX - bounds.left)
+        const mouseY = bounds.height - (event.clientY - bounds.top)
+        
         const worldX = (mouseX - this.x) / this.scale
         const worldY = (mouseY - this.y) / this.scale
 
         this.scale = newScale
-        //this.x = mouseX - worldX * newScale
-        //this.y = mouseY - worldY * newScale
+        this.x = mouseX - worldX * newScale
+        this.y = mouseY - worldY * newScale
     }
 
     public handleDoubleClick = () => {
