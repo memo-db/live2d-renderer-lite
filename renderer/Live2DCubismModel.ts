@@ -106,6 +106,7 @@ export const isLive2DZip = async (arrayBuffer: ArrayBuffer) => {
 
 export class Live2DCubismModel extends Live2DCubismUserModel {
     private events: {[event: string]: Function[]} = {}
+    private _paused: boolean
     public buffers: Live2DBuffers
     public motions: csmMap<string, ACubismMotion>
     public expressions: csmMap<string, ACubismMotion>
@@ -121,7 +122,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public currentFrame: DOMHighResTimeStamp
     public lastFrame: DOMHighResTimeStamp
     public queueManager: CubismMotionQueueManager
-    public paused: boolean
     public premultipliedAlpha: boolean
     public cubismCorePath: string
     public autoAnimate: boolean
@@ -264,6 +264,15 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.doubleClickReset = doubleClickReset
     }
 
+    get paused() {
+        return this._paused
+    }
+
+    set paused(paused) {
+        if (paused) this.stopMotions()
+        this._paused = paused
+    }
+
     public constructor(canvas: HTMLCanvasElement, options?: Live2DModelOptions) {
         if (!options) options = {}
         super()
@@ -285,7 +294,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.tapInteraction = options.tapInteraction ?? true
         this.keepAspect = options.keepAspect ?? false
         this.randomMotion = options.randomMotion ?? true
-        this.paused = options.paused ?? false
+        this._paused = options.paused ?? false
         this.speed = options.speed ?? 1
         this.audioContext = options.audioContext ?? new AudioContext()
         if (options.maxTextureSize) this.maxTextureSize = options.maxTextureSize
@@ -625,20 +634,20 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
         
         this.model.saveParameters()
+
+        let motionUpdated = this.motionController.update(this.deltaTime)
+        this.expressionController.update(this.deltaTime)
+
         if (!this.paused) {
             this.dragManager.update(this.deltaTime)
             this.dragX = this.dragManager.getX()
             this.dragY = this.dragManager.getY()
-    
-            let motionUpdated = this.motionController.update(this.deltaTime)
     
             if (!motionUpdated) {
                 if (this.eyeBlink !== null && this.enableEyeblink) {
                   this.eyeBlink.updateParameters(this.model, this.deltaTime)
                 }
             }
-    
-            this.expressionController.update(this.deltaTime)
     
             if (this.enableMovement) {
                 const manager = CubismFramework.getIdManager?.()
@@ -698,6 +707,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public stopMotions = () => {
+        if (!this.loaded) return
         this.motionController.stopMotions()
     }
 

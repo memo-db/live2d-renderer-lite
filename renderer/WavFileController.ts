@@ -34,9 +34,9 @@ export class WavFileController {
         this.userTime = 0
         this.previousRms = 0
         this.rms = 0
-        const cloneBufer = wavBuffer.slice(0)
+        const cloneBuffer = new Uint8Array(wavBuffer).slice().buffer
         const decodedAudio = await this.model.audioContext.decodeAudioData(wavBuffer)
-        const cloneAudio = await this.model.audioContext.decodeAudioData(cloneBufer)
+        const cloneAudio = await this.model.audioContext.decodeAudioData(cloneBuffer)
         this.numChannels = decodedAudio.numberOfChannels
         this.sampleRate = decodedAudio.sampleRate
         this.samples = Array.from({length: this.numChannels}, (v, i) => decodedAudio.getChannelData(i))

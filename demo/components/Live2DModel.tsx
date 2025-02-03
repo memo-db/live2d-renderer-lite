@@ -23,7 +23,14 @@ const Live2DModel: React.FunctionComponent = (props) => {
     const [speed, setSpeed] = useState(1)
     const [paused, setPaused] = useState(false)
     const [enableZoom, setEnableZoom] = useState(true)
+    const [canvasSize, setCanvasSize] = useState(Math.min(window.innerWidth, 700))
     const rendererRef = useRef<HTMLCanvasElement>(null)
+
+    useEffect(() => {
+        const handleResize = () => setCanvasSize(Math.min(window.innerWidth, 700))
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
+    }, [])
 
     const load = async () => {
         let cubismCorePath = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"
@@ -80,7 +87,7 @@ const Live2DModel: React.FunctionComponent = (props) => {
                 <img draggable={false} className="live2d-control-icon" src={live2D.paused ? play : pause} onClick={() => setPaused((prev) => !prev)}/>
                 <img draggable={false} className="live2d-control-icon" src={speedIcon()} onClick={changeSpeed}/>
             </div> : null}
-            <canvas ref={rendererRef} width={700} height={700}></canvas>
+            <canvas ref={rendererRef} width={canvasSize} height={canvasSize}></canvas>
         </div>
     )
 }

@@ -41,7 +41,7 @@ export class MotionController {
         let motionUpdated = false
         this.model.model.loadParameters()
         if (this.model.motionManager.isFinished()) {
-            if (this.model.enableMotion) {
+            if (!this.model.paused && this.model.enableMotion) {
                 if (this.model.randomMotion) {
                     this.startRandomMotion(null, MotionPriority.Idle)
                 } else {
