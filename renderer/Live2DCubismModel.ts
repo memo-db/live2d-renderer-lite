@@ -328,7 +328,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.updateTime()
     }
 
-    public destroy = () => {
+    public destroy = (destroyCubism = false) => {
         cancelAnimationFrame(id)
         this.motions.clear()
         this.expressions.clear()
@@ -337,11 +337,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.webGLRenderer.deleteTextures()
         this.touchController.cancelInteractions()
         this.cameraController.removeListeners()
-        CubismFramework.dispose()
         this.buffers = null
         this.canvas = null
         this.loaded = false
         this.cubismLoaded = false
+        if (destroyCubism) CubismFramework.dispose()
     }
 
     public loadCubismCore = async () => {
