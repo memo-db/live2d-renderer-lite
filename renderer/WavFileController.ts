@@ -53,7 +53,10 @@ export class WavFileController {
         } else {
             this.sourceNode.connect(this.volumeNode)
         }
-        this.sourceNode.start(this.userTime)
+        return new Promise<void>((resolve) => {
+            this.sourceNode.onended = () => resolve()
+            this.sourceNode.start(this.userTime)
+        })
     }
 
     public stop = async () => {

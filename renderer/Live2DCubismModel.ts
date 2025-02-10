@@ -235,7 +235,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     get y() {
         return this.cameraController.y
     }
-
+    
     set y(y) {
         this.cameraController.y = y
     }
@@ -592,15 +592,17 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
     public updateCamera = () => {
         const {x, y, scale} = this.cameraController
+    
         const logicalX = this.logicalLeft + (x / this.canvas.width) * (this.logicalRight - this.logicalLeft)
         const logicalY = this.logicalTop - (y / this.canvas.height) * (this.logicalTop - this.logicalBottom)
-
+    
         const centerX = (this.logicalLeft + this.logicalRight) / 2
         const centerY = (this.logicalTop + this.logicalBottom) / 2
-
+    
         this.viewMatrix.translate(centerX - logicalX, centerY - logicalY)
         this.viewMatrix.scale(scale, scale)
     }
+    
 
     public updateProjection = () => {
         const {width, height} = this.canvas
@@ -753,7 +755,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         return this.expressionController.setRandomExpression()
     }
 
-    public inputAudio = (wavBuffer: ArrayBuffer, playAudio = false) => {
+    public inputAudio = async (wavBuffer: ArrayBuffer, playAudio = false) => {
         return this.wavController.start(wavBuffer, playAudio)
     }
 
@@ -842,5 +844,38 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
         const ratio = (firstNonTransparentY / clonedCanvas.height)
         this.y += (ratio * this.canvas.height) - marginHeight
+    }
+
+    public characterPosition = () => {
+        const savedX = this.x
+        const savedY = this.y
+        this.x = this.canvas.width / 2
+        this.y = this.canvas.height / 2
+        this.update()
+    
+        const clonedCanvas = document.createElement("canvas")
+        clonedCanvas.width = this.canvas.width
+        clonedCanvas.height = this.canvas.height
+        const ctx = clonedCanvas.getContext("2d")
+        ctx.drawImage(this.canvas, 0, 0, clonedCanvas.width, clonedCanvas.height)
+        this.x = savedX
+        this.y = savedY
+    
+        const imageData = ctx.getImageData(0, 0, clonedCanvas.width, clonedCanvas.height).data
+        let firstNonTransparentY = clonedCanvas.height
+        let lastNonTransparentY = 0
+    
+        for (let y = 0; y < clonedCanvas.height; y++) {
+            for (let x = 0; x < clonedCanvas.width; x++) {
+                if (imageData[(y * clonedCanvas.width + x) * 4 + 3] !== 0) {
+                    firstNonTransparentY = Math.min(firstNonTransparentY, y)
+                    lastNonTransparentY = Math.max(lastNonTransparentY, y)
+                }
+            }
+        }
+    
+        const characterHeight = lastNonTransparentY - firstNonTransparentY
+    
+        return {firstNonTransparentY, lastNonTransparentY, characterHeight}
     }
 }
