@@ -9,7 +9,7 @@ import normalSpeed from "../../assets/1x.png"
 import doubleSpeed from "../../assets/2x.png"
 import pause from "../../assets/pause.png"
 import play from "../../assets/play.png"
-import {Live2DCubismModel} from "../../live2dcubism"
+import {Live2DCubismModel, compressLive2DTextures} from "../../live2dcubism"
 import "./styles/live2dmodel.less"
 
 const audioContext = new window.AudioContext()
@@ -35,12 +35,20 @@ const Live2DModel: React.FunctionComponent = (props) => {
     const load = async () => {
         let cubismCorePath = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"
         const live2DModel = new Live2DCubismModel(rendererRef.current!, {cubismCorePath})
-        live2DModel.canvas.width = 2000
-        live2DModel.canvas.height = 2000
+        live2DModel.canvas.width = 700
+        live2DModel.canvas.height = 700
+
+
+
+        const buffer = await fetch(model).then((r) => r.arrayBuffer())
+        const newModel = await compressLive2DTextures(buffer)
+        const url = URL.createObjectURL(new Blob([new Uint8Array(newModel)]))
+
         await live2DModel.load(model)
         setLive2D(live2DModel)
-        const img = await live2DModel.takeScreenshot("webp")
-        console.log(img)
+        const newScale = 3
+        live2DModel.scale = newScale
+        live2DModel.centerAndReposition()
     }
 
     useEffect(()=> {

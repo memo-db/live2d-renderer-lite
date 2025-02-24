@@ -104,6 +104,43 @@ export const isLive2DZip = async (arrayBuffer: ArrayBuffer) => {
     return hasModel && hasMoc3 && hasTexture
 }
 
+export const compressLive2DTextures = async (arrayBuffer: ArrayBuffer, maxSize = 8192, quality = 0.9) => {
+    const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
+    if (result.mime !== "application/zip") return arrayBuffer
+    
+    const zip = await JSZip.loadAsync(arrayBuffer)
+    const newZip = new JSZip()
+
+    for (const [relativePath, file] of Object.entries(zip.files)) {
+        if (relativePath.startsWith("__MACOSX") || file.dir) continue
+        if (relativePath.match(/\.(png|jpg|webp|avif)$/)) {
+            const blob = await file.async("blob")
+            const image = await createImageBitmap(blob)
+
+            let newBlob = blob
+            if (image.width > maxSize || image.height > maxSize) {
+                const canvas = document.createElement("canvas")
+                const ctx = canvas.getContext("2d")
+                const aspectRatio = image.width / image.height
+                if (image.width > image.height) {
+                    canvas.width = maxSize
+                    canvas.height = maxSize / aspectRatio
+                } else {
+                    canvas.height = maxSize
+                    canvas.width = maxSize * aspectRatio
+                }
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+                newBlob = await new Promise<Blob>(resolve => canvas.toBlob(resolve, blob.type, quality))
+            }
+
+            newZip.file(relativePath, newBlob)
+        } else {
+            newZip.file(relativePath, await file.async("arraybuffer"))
+        }
+    }
+    return newZip.generateAsync({type: "arraybuffer"})
+}
+
 export class Live2DCubismModel extends Live2DCubismUserModel {
     private events: {[event: string]: Function[]} = {}
     private _paused: boolean
@@ -227,18 +264,18 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     get x() {
         return this.cameraController.x
     }
-
+    
     set x(x) {
         this.cameraController.x = x
     }
-
+    
     get y() {
         return this.cameraController.y
     }
     
     set y(y) {
         this.cameraController.y = y
-    }
+    }    
 
     get lipsyncSmoothing() {
         return this.wavController.smoothingFactor
@@ -602,7 +639,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.viewMatrix.translate(centerX - logicalX, centerY - logicalY)
         this.viewMatrix.scale(scale, scale)
     }
-    
 
     public updateProjection = () => {
         const {width, height} = this.canvas
@@ -846,6 +882,38 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.y += (ratio * this.canvas.height) - marginHeight
     }
 
+    public centerAndReposition = () => {
+        this.x = this.canvas.width / 2
+        this.y = this.canvas.height / 2
+        this.update()
+        const clonedCanvas = document.createElement("canvas")
+        clonedCanvas.width = this.canvas.width
+        clonedCanvas.height = this.canvas.height
+        const ctx = clonedCanvas.getContext("2d")
+        ctx.drawImage(this.canvas, 0, 0, clonedCanvas.width, clonedCanvas.height)
+        const imageData = ctx.getImageData(0, 0, clonedCanvas.width, clonedCanvas.height).data
+
+        let firstNonTransparentY = clonedCanvas.height
+        let lastNonTransparentY = 0
+        
+        for (let y = 0; y < clonedCanvas.height; y++) {
+            for (let x = 0; x < clonedCanvas.width; x++) {
+                if (imageData[(y * clonedCanvas.width + x) * 4 + 3] !== 0) {
+                    firstNonTransparentY = Math.min(firstNonTransparentY, y)
+                    lastNonTransparentY = Math.max(lastNonTransparentY, y)
+                }
+            }
+        }
+
+        const characterHeight = lastNonTransparentY - firstNonTransparentY
+        const scaledHeight = characterHeight * this.scale
+
+        this.y = (this.canvas.height / 2) - ((scaledHeight - characterHeight) / 2)
+
+        const margin = characterHeight * 0.1
+        this.y -= -(firstNonTransparentY * this.scale * 2) - margin
+    }
+
     public characterPosition = () => {
         const savedX = this.x
         const savedY = this.y
@@ -875,7 +943,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
     
         const characterHeight = lastNonTransparentY - firstNonTransparentY
-    
-        return {firstNonTransparentY, lastNonTransparentY, characterHeight}
+        const ratio = (firstNonTransparentY / clonedCanvas.height)
+        return {firstNonTransparentY, lastNonTransparentY, characterHeight, ratio}
     }
 }
