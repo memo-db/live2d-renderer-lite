@@ -791,7 +791,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         return this.expressionController.setRandomExpression()
     }
 
-    public inputAudio = async (wavBuffer: ArrayBuffer, playAudio = false) => {
+    public inputAudio = async (wavBuffer: ArrayBuffer | AudioBuffer, playAudio = false) => {
         return this.wavController.start(wavBuffer, playAudio)
     }
 

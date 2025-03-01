@@ -29,14 +29,26 @@ export class WavFileController {
         this.volumeNode.connect(this.model.audioContext.destination)
     }
 
-    public start = async (wavBuffer: ArrayBuffer, playAudio = false) => {
+    public start = async (wavBuffer: ArrayBuffer | AudioBuffer, playAudio = false) => {
         this.sampleOffset = 0
         this.userTime = 0
         this.previousRms = 0
         this.rms = 0
-        const cloneBuffer = new Uint8Array(wavBuffer).slice().buffer
-        const decodedAudio = await this.model.audioContext.decodeAudioData(wavBuffer)
-        const cloneAudio = await this.model.audioContext.decodeAudioData(cloneBuffer)
+        let decodedAudio = null as AudioBuffer | null 
+        let cloneAudio = null as AudioBuffer | null 
+        if (wavBuffer instanceof AudioBuffer) {
+            decodedAudio = wavBuffer
+            const offlineContext = new OfflineAudioContext(wavBuffer.numberOfChannels, wavBuffer.length, wavBuffer.sampleRate)
+            const bufferSource = offlineContext.createBufferSource()
+            bufferSource.buffer = wavBuffer
+            bufferSource.connect(offlineContext.destination)
+            bufferSource.start()
+            cloneAudio = await offlineContext.startRendering()
+        } else {
+            const cloneBuffer = new Uint8Array(wavBuffer).slice().buffer
+            decodedAudio = await this.model.audioContext.decodeAudioData(wavBuffer)
+            cloneAudio = await this.model.audioContext.decodeAudioData(cloneBuffer)
+        }
         this.numChannels = decodedAudio.numberOfChannels
         this.sampleRate = decodedAudio.sampleRate
         this.samples = Array.from({length: this.numChannels}, (v, i) => decodedAudio.getChannelData(i))

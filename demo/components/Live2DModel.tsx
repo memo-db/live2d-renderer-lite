@@ -38,8 +38,6 @@ const Live2DModel: React.FunctionComponent = (props) => {
         live2DModel.canvas.width = 700
         live2DModel.canvas.height = 700
 
-
-
         const buffer = await fetch(model).then((r) => r.arrayBuffer())
         const newModel = await compressLive2DTextures(buffer)
         const url = URL.createObjectURL(new Blob([new Uint8Array(newModel)]))
