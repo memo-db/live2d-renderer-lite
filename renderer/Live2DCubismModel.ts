@@ -372,6 +372,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.eyeBlinkIds.clear()
         this.lipSyncIds.clear()
         this.webGLRenderer.deleteTextures()
+        this.webGLRenderer.deleteShader()
         this.touchController.cancelInteractions()
         this.cameraController.removeListeners()
         this.buffers = null
@@ -497,6 +498,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 img.onload = () => resolve()
                 img.onerror = (err) => reject(err)
             })
+            URL.revokeObjectURL(url)
             textureImages.push(img)
         }
     

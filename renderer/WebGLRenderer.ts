@@ -47,6 +47,11 @@ export class WebGLRenderer {
         return shader
     }
 
+    public deleteShader = () => {
+        const gl = this.model.canvas.getContext("webgl2")
+        gl.deleteProgram(this.shader)
+    }
+
     public start = () => {
         const gl = this.model.canvas.getContext("webgl2")
         this.model.getRenderer().startUp(gl)
