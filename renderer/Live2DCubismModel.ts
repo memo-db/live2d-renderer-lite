@@ -406,16 +406,20 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cubismLoaded = true
     }
 
-    public loadBuffers = async (link: string) => {
-        let isZip = path.extname(link).replace(".", "") === "zip"
-        const arrayBuffer = await fetch(link).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
+    public loadBuffers = async (link: string | ArrayBuffer) => {
+        let isZip = false
+        let arrayBuffer = link instanceof ArrayBuffer ? link : new ArrayBuffer(0)
+        if (typeof link === "string") {
+            isZip = path.extname(link).replace(".", "") === "zip"
+            arrayBuffer = await fetch(link).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
+        }
         if (!arrayBuffer.byteLength) return Promise.reject(`Failed to load ${link}`)
 
         const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
         if (result.mime === "application/zip") isZip = true
 
         let files = {} as {[key: string]: ArrayBuffer}
-        let basename = path.dirname(link)
+        let basename = link instanceof ArrayBuffer ? "." : path.dirname(link)
     
         if (isZip) {
             const zip = await JSZip.loadAsync(arrayBuffer)
@@ -506,7 +510,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         return this.buffers
     }
 
-    public load = async (link: string) => {
+    public load = async (link: string | ArrayBuffer) => {
         if (!this.cubismLoaded) await this.initializeCubism()
         const {modelBuffer, physicsBuffer, poseBuffer, userDataBuffer} = await this.loadBuffers(link)
 
