@@ -41,6 +41,7 @@ const Live2DModel: React.FunctionComponent = (props) => {
         const buffer = await fetch(model).then((r) => r.arrayBuffer())
         const newModel = await compressLive2DTextures(buffer)
         const url = URL.createObjectURL(new Blob([new Uint8Array(newModel)]))
+        console.log(url)
 
         await live2DModel.load(model)
         setLive2D(live2DModel)

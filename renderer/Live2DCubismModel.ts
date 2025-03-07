@@ -367,6 +367,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
     public destroy = (destroyCubism = false) => {
         cancelAnimationFrame(id)
+        this.model.release()
+        this.release()
         this.motions.clear()
         this.expressions.clear()
         this.eyeBlinkIds.clear()
@@ -375,6 +377,18 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.webGLRenderer.deleteShader()
         this.touchController.cancelInteractions()
         this.cameraController.removeListeners()
+        Object.keys(this.events).forEach(event => {
+            this.events[event] = []
+        })
+        if (this.buffers) {
+            this.buffers.modelBuffer = null
+            this.buffers.expressionBuffers = []
+            this.buffers.physicsBuffer = null
+            this.buffers.poseBuffer = null
+            this.buffers.userDataBuffer = null
+            this.buffers.motionGroups = []
+            this.buffers.textureImages = []
+        }
         this.buffers = null
         this.canvas = null
         this.loaded = false
@@ -515,6 +529,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         const {modelBuffer, physicsBuffer, poseBuffer, userDataBuffer} = await this.loadBuffers(link)
 
         this.loadModel(modelBuffer, this._mocConsistency)
+        this.model.initialize()
         this.initialize()
 
         await this.expressionController.load()
