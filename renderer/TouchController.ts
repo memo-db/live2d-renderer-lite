@@ -11,7 +11,6 @@ export class TouchController {
         this.model = model
         this.startX = this.startY = 0
         this.lastX = this.lastY = 0
-        this.startInteractions()
     }
   
     public touchStart = (posX: number, posY: number) => {
@@ -99,5 +98,10 @@ export class TouchController {
         document.removeEventListener("pointermove", this.pointerMove)
         document.removeEventListener("pointerup", this.pointerUp)
         document.removeEventListener("pointercancel", this.pointerUp)
+    }
+
+    public initInteractions = () => {
+        this.cancelInteractions()
+        this.startInteractions()
     }
 }

@@ -26,7 +26,6 @@ export class CameraController {
         this.lastPosition = {x: 0, y: 0}
         this.zoomStep = 0.005
         this.panSpeed = 1
-        this.addListeners()
     }
 
     public zoomIn = (factor = 0.1) => {
@@ -125,5 +124,10 @@ export class CameraController {
         window.removeEventListener("mouseup", this.handleMouseUp)
         this.model.canvas.removeEventListener("dblclick", this.handleDoubleClick)
         this.model.canvas.removeEventListener("contextmenu", (event) => event.preventDefault())
+    }
+
+    public initListeners = () => {
+        this.removeListeners()
+        this.addListeners()
     }
 }

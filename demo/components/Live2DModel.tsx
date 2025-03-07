@@ -44,10 +44,15 @@ const Live2DModel: React.FunctionComponent = (props) => {
         console.log(url)
 
         await live2DModel.load(model)
-        setLive2D(live2DModel)
+        //setLive2D(live2DModel)
         const newScale = 3
         live2DModel.scale = newScale
-        live2DModel.centerAndReposition()
+        //live2DModel.centerAndReposition()
+
+        live2DModel.destroy()
+
+        await live2DModel.load(model)
+        setLive2D(live2DModel)
     }
 
     useEffect(()=> {
