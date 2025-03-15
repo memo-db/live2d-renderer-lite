@@ -19,66 +19,10 @@ import {MotionController} from "./MotionController"
 import {ExpressionController} from "./ExpressionController"
 import {CameraController} from "./CameraController"
 import {WebGLRenderer} from "./WebGLRenderer"
+import {Live2DModelOptions, Live2DBuffers, CubismCDI3Json, VTubeStudioJson, EventMap} from "./types"
 import fileType from "magic-bytes.js"
 import JSZip from "jszip"
 import path from "path"
-
-export interface Live2DModelOptions {
-    autoAnimate?: boolean
-    autoInteraction?: boolean
-    tapInteraction?: boolean
-    randomMotion?: boolean
-    keepAspect?: boolean
-    cubismCorePath?: string
-    paused?: boolean
-    speed?: number
-    scale?: number
-    minScale?: number
-    maxScale?: number
-    panSpeed?: number
-    zoomStep?: number
-    x?: number
-    y?: number
-    zoomEnabled?: boolean
-    doubleClickReset?: boolean
-    enablePan?: boolean
-    checkMocConsistency?: boolean
-    premultipliedAlpha?: boolean
-    lipsyncSmoothing?: number
-    volume?: number
-    audioContext?: AudioContext
-    connectNode?: AudioNode
-    maxTextureSize?: number
-    enablePhysics?: boolean
-    enableEyeblink?: boolean
-    enableBreath?: boolean
-    enableLipsync?: boolean
-    enableMotion?: boolean
-    enableExpression?: boolean
-    enableMovement?: boolean
-    enablePose?: boolean
-}
-
-export interface Live2DBuffers {
-    modelBuffer: ArrayBuffer
-    expressionBuffers: ArrayBuffer[]
-    physicsBuffer: ArrayBuffer | null
-    poseBuffer: ArrayBuffer | null
-    userDataBuffer: ArrayBuffer | null
-    motionGroups: {group: string, motionData: {motionBuffers: ArrayBuffer[], wavBuffer: ArrayBuffer | null}}[]
-    textureImages: HTMLImageElement[]
-}
-
-export enum MotionPriority {
-    None, 
-    Idle, 
-    Normal, 
-    Force
-}
-
-type EventMap = {
-    hit: (hitAreas: string[], x: number, y: number) => void
-}
 
 let id = null
 
@@ -104,7 +48,7 @@ export const isLive2DZip = async (arrayBuffer: ArrayBuffer) => {
     return hasModel && hasMoc3 && hasTexture
 }
 
-export const compressLive2DTextures = async (arrayBuffer: ArrayBuffer, maxSize = 8192, quality = 0.9) => {
+export const compressLive2DTextures = async (arrayBuffer: ArrayBuffer, maxSize = 8192, quality = 0.9, returnSmaller = true) => {
     const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
     if (result.mime !== "application/zip") return arrayBuffer
     
@@ -138,7 +82,13 @@ export const compressLive2DTextures = async (arrayBuffer: ArrayBuffer, maxSize =
             newZip.file(relativePath, await file.async("arraybuffer"))
         }
     }
-    return newZip.generateAsync({type: "arraybuffer"})
+    const newBuffer = await newZip.generateAsync({type: "arraybuffer"})
+
+    if (returnSmaller) {
+        return newBuffer.byteLength < arrayBuffer.byteLength ? newBuffer : arrayBuffer
+    } else {
+        return newBuffer
+    }
 }
 
 export class Live2DCubismModel extends Live2DCubismUserModel {
@@ -147,10 +97,14 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public buffers: Live2DBuffers
     public motions: csmMap<string, ACubismMotion>
     public expressions: csmMap<string, ACubismMotion>
+    public expressionIds: string[]
+    public motionIds: string[]
     public textures: csmVector<WebGLTexture>
     public eyeBlinkIds: csmVector<CubismIdHandle>
     public lipSyncIds: csmVector<CubismIdHandle>
     public settings: ICubismModelSetting
+    public vtubeSettings: VTubeStudioJson
+    public displayInfo: CubismCDI3Json
     public viewMatrix: CubismViewMatrix
     public projection: CubismMatrix44
     public deviceToScreen: CubismMatrix44
@@ -316,6 +270,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.canvas = canvas
         this.motions = new csmMap<string, ACubismMotion>()
         this.expressions = new csmMap<string, ACubismMotion>()
+        this.expressionIds = []
+        this.motionIds = []
         this.textures = new csmVector<WebGLTexture>()
         this.eyeBlinkIds = new csmVector<CubismIdHandle>()
         this.lipSyncIds = new csmVector<CubismIdHandle>()
@@ -375,6 +331,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.webGLRenderer.deleteShader()
         this.touchController.cancelInteractions()
         this.cameraController.removeListeners()
+        this.expressionIds = []
+        this.motionIds = []
         Object.keys(this.events).forEach(event => {
             this.events[event] = []
         })
@@ -443,6 +401,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 const contents = await file.async("arraybuffer")
                 files[key] = contents
                 if (!this.settings && key.endsWith("model3.json")) this.settings = new CubismModelSettingJson(contents, contents.byteLength)
+                if (!this.vtubeSettings && key.endsWith("vtube.json")) this.vtubeSettings = JSON.parse(await file.async("string"))
+                if (!this.displayInfo && key.endsWith("cdi3.json")) this.displayInfo = JSON.parse(await file.async("string"))
             }
         } else {
             this.settings = new CubismModelSettingJson(arrayBuffer, arrayBuffer.byteLength)
@@ -488,18 +448,36 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         const modelBuffer = await getBuffer(this.settings.getModelFileName())
         this.size = modelBuffer.byteLength
     
-        const expressionBuffers = await getBufferArray(this.settings.getExpressionCount(), (i: number) => this.settings.getExpressionFileName(i))
         const physicsBuffer = await getBufferOptional(() => this.settings.getPhysicsFileName())
         const poseBuffer = await getBufferOptional(() => this.settings.getPoseFileName())
         const userDataBuffer = await getBufferOptional(() => this.settings.getUserDataFile())
+
+        const expressionBuffers = []
+        if (this.settings.getExpressionCount()) {
+            expressionBuffers.push(...await getBufferArray(this.settings.getExpressionCount(), (i: number) => this.settings.getExpressionFileName(i)))
+            this.expressionIds = Array.from({length: this.settings.getExpressionCount()}).map((_, i) => this.settings.getExpressionFileName(i))
+        } else if (this.vtubeSettings) {
+            this.expressionIds = this.vtubeSettings.Hotkeys.filter((h: any) => h.Action === "ToggleExpression").map((e: any) => e.File)
+            expressionBuffers.push(...await getBufferArray(this.expressionIds.length, (i: number) => this.expressionIds[i]))
+        }
     
         const motionGroups = []
-        for (let i = 0; i < this.settings.getMotionGroupCount(); i++) {
-            const group = this.settings.getMotionGroupName(i)
-            const motionBuffers = await getBufferArray(this.settings.getMotionCount(group), (i: number) => this.settings.getMotionFileName(group, i))
-            const wavBuffer = await getBufferOptional(() => this.settings.getMotionSoundFileName(group, i))
-    
-            motionGroups.push({group, motionData: {motionBuffers, wavBuffer}})
+        if (this.settings.getMotionGroupCount()) {
+            for (let i = 0; i < this.settings.getMotionGroupCount(); i++) {
+                const group = this.settings.getMotionGroupName(i)
+                const motionBuffers = await getBufferArray(this.settings.getMotionCount(group), (i: number) => this.settings.getMotionFileName(group, i))
+                const wavBuffer = await getBufferOptional(() => this.settings.getMotionSoundFileName(group, i))
+                motionGroups.push({group, motionData: {motionBuffers, wavBuffer}})
+                this.motionIds.push(...Array.from({length: this.settings.getMotionCount(group)}).map((_, i) => `${group}_${i}`))
+            }
+        } else if (this.vtubeSettings) {
+            const motions = [this.vtubeSettings.FileReferences.IdleAnimation]
+            motions.push(...this.vtubeSettings.Hotkeys.filter((h) => h.Action === "TriggerAnimation").map((e) => e.File))
+            for (let i = 0; i < motions.length; i++) {
+                const buffer = await getBuffer(motions[i])
+                motionGroups.push({group: motions[i], motionData: {motionBuffers: [buffer], wavBuffer: null}})
+                this.motionIds.push(`${motions[i]}_0`)
+            }
         }
     
         const textureImages = []
@@ -574,6 +552,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         const lipSyncCount = this.settings.getLipSyncParameterCount()
         for (let i = 0; i < lipSyncCount; ++i) {
             this.lipSyncIds.pushBack(this.settings.getLipSyncParameterId(i))
+        }
+        if (!lipSyncCount) {
+            const index = this.parameters.ids.indexOf("ParamMouthOpenY")
+            if (index !== -1) this.lipSyncIds.pushBack(this.model.getParameterId(index))
+            this.lipsync = Boolean(this.lipSyncIds.getSize())
         }
 
         const layout = new csmMap<string, number>()
@@ -781,27 +764,15 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     }
 
     public getExpressions = () => {
-        let expressions = [] as string[]
-        const expressionCount = this.settings.getExpressionCount() || 0
-        for (let i = 0; i < expressionCount; i++) {
-            const expression = this.settings.getExpressionName(i)
-            expressions.push(expression)
-        }
-        return expressions
+        return this.expressionIds
     }
 
     public getMotions = () => {
-        let motions = [] as string[]
-        const motionGroupCount = this.settings.getMotionGroupCount() || 0
-        for (let i = 0; i < motionGroupCount; i++) {
-            const group = this.settings.getMotionGroupName(i)
-            let motionCount = this.settings.getMotionCount(group) || 0
-            for (let j = 0; j < motionCount; j++) {
-                let name = `${group}_${j}`
-                motions.push(name)
-            }
-        }
-        return motions
+        return this.motionIds
+    }
+
+    public hasLipsync = () => {
+        return this.lipsync
     }
 
     public setExpression = (expression: string) => {
@@ -966,5 +937,23 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         const characterHeight = lastNonTransparentY - firstNonTransparentY
         const ratio = (firstNonTransparentY / clonedCanvas.height)
         return {firstNonTransparentY, lastNonTransparentY, characterHeight, ratio}
+    }
+
+    public getParameterName = (parameter: string) => {
+        if (!this.displayInfo) return parameter
+        return this.displayInfo.Parameters.find((p) => p.Id === parameter)?.Name ?? parameter
+    }
+
+    public getPartName = (part: string) => {
+        if (!this.displayInfo) return part
+        return this.displayInfo.Parts.find((p) => p.Id === part)?.Name ?? part
+    }
+
+    public getParameterNames = () => {
+        return this.parameters.ids.map((id) => this.getParameterName(id))
+    }
+
+    public getPartNames = () => {
+        return this.parts.ids.map((id) => this.getPartName(id))
     }
 }

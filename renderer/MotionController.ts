@@ -1,7 +1,8 @@
 import {CubismMotionQueueEntryHandle, InvalidMotionQueueEntryHandleValue} from "../framework/src/motion/cubismmotionqueuemanager"
 import {ACubismMotion, FinishedMotionCallback, BeganMotionCallback} from "../framework/src/motion/acubismmotion"
 import {CubismMotion} from "../framework/src/motion/cubismmotion"
-import {Live2DCubismModel, MotionPriority} from "./Live2DCubismModel"
+import {Live2DCubismModel} from "./Live2DCubismModel"
+import {MotionPriority} from "./types"
 
 export class MotionController {
     public model: Live2DCubismModel
@@ -100,11 +101,12 @@ export class MotionController {
     public startRandomMotion = async (group: string | null, priority: number, onStartMotion?: BeganMotionCallback, 
         onEndMotion?: FinishedMotionCallback): Promise<CubismMotionQueueEntryHandle> => {
         if (!this.model.loaded) return
+        const {motionGroups} = this.model.buffers
         if (!group) {
-            const randGroup = Math.floor(Math.random() * this.model.settings.getMotionGroupCount())
-            group = this.model.settings.getMotionGroupName(randGroup)
+            const randGroup = Math.floor(Math.random() * motionGroups.length)
+            group = motionGroups[randGroup]?.group
         }
-        let motionCount = this.model.settings.getMotionCount(group)
+        let motionCount = motionGroups.find((g) => g.group === group)?.motionData.motionBuffers.length
         if (!motionCount) return
         const rand = Math.floor(Math.random() * motionCount)
         return this.startMotion(group, rand, priority, onStartMotion, onEndMotion)

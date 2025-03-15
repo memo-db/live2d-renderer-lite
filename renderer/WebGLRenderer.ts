@@ -1,5 +1,5 @@
 
-import {Live2DCubismModel, MotionPriority} from "./Live2DCubismModel"
+import {Live2DCubismModel} from "./Live2DCubismModel"
 
 export class WebGLRenderer {
     public model: Live2DCubismModel

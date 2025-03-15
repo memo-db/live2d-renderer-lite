@@ -12,7 +12,7 @@ export class ExpressionController {
         const {expressionBuffers} = this.model.buffers
 
         for (let i = 0; i < expressionBuffers.length; i++) {
-            const name = this.model.settings.getExpressionName(i)
+            const name = this.model.expressionIds[i]
             const expressionBuffer = expressionBuffers[i]
             const motion = this.model.loadExpression(expressionBuffer, expressionBuffer.byteLength, name)
 

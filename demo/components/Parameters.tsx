@@ -49,12 +49,14 @@ const Parameters: React.FunctionComponent = (props) => {
         let jsx = [] as React.ReactElement[]
 
         let parameters = live2D.parameters
+        let parameterNames = live2D.getParameterNames()
         const resetParameters = () => {
             live2D.resetParameters()
             forceUpdate()
         }
 
         for (let i = 0; i < parameters.ids.length; i++) {
+            const name = parameterNames[i]
             const id = parameters.ids[i]
             const value = parameters.values[i]
             const defaultValue = parameters.defaultValues[i]
@@ -68,7 +70,7 @@ const Parameters: React.FunctionComponent = (props) => {
             }
             jsx.push(
                 <div className="parameters-dialog-row">
-                    <span className="parameters-dialog-text">{id}</span>
+                    <span className="parameters-dialog-text">{name}</span>
                     <Slider className="parameters-slider" trackClassName="parameters-slider-track" thumbClassName="parameters-slider-thumb" 
                     onChange={(value: number) => updateParameter(value)} min={min} max={max} step={step} value={value}/>
                 </div>
@@ -93,12 +95,14 @@ const Parameters: React.FunctionComponent = (props) => {
         let jsx = [] as React.ReactElement[]
 
         let parts = live2D.parts
+        let partNames = live2D.getPartNames()
         const resetParts = () => {
             live2D.resetPartOpacities()
             forceUpdate()
         }
 
         for (let i = 0; i < parts.ids.length; i++) {
+            const name = partNames[i]
             const id = parts.ids[i]
             const opacity = parts.opacities[i]
             const updateOpacity = (opacity: number) => {
@@ -107,7 +111,7 @@ const Parameters: React.FunctionComponent = (props) => {
             }
             jsx.push(
                 <div className="parameters-dialog-row">
-                    <span className="parameters-dialog-text">{id}</span>
+                    <span className="parameters-dialog-text">{name}</span>
                     <Slider className="parameters-slider" trackClassName="parameters-slider-track" thumbClassName="parameters-slider-thumb" 
                     onChange={(opacity: number) => updateOpacity(opacity)} min={0} max={1} step={0.01} value={opacity}/>
                 </div>
