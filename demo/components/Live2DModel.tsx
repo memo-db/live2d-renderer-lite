@@ -38,11 +38,12 @@ const Live2DModel: React.FunctionComponent = (props) => {
         live2DModel.canvas.width = 700
         live2DModel.canvas.height = 700
 
-        await live2DModel.load(model)
+        const arrayBuffer = await fetch(model).then((r) => r.arrayBuffer())
+        const newBuffer = await compressLive2DTextures(arrayBuffer)
+        console.log(URL.createObjectURL(new Blob([new Uint8Array(newBuffer)])))
+
+        await live2DModel.load(newBuffer)
         setLive2D(live2DModel)
-        const newScale = 3
-        //live2DModel.scale = newScale
-        //live2DModel.centerAndReposition()
     }
 
     useEffect(()=> {
