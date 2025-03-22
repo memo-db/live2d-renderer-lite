@@ -148,6 +148,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public enablePose: boolean
     public size: number
     public maxTextureSize: number
+    public scaledYPos: boolean
     public totalMotionCount: number = 0
     public needsResize: boolean = false
     public loaded: boolean = false
@@ -294,6 +295,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.randomMotion = options.randomMotion ?? true
         this._paused = options.paused ?? false
         this.speed = options.speed ?? 1
+        this.scaledYPos = options.scaledYPos ?? false
         this.audioContext = options.audioContext ?? new AudioContext()
         if (options.maxTextureSize) this.maxTextureSize = options.maxTextureSize
         if (options.connectNode) this.connectNode = options.connectNode
@@ -312,7 +314,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cameraController.zoomStep = options.zoomStep ?? 0.005
         this.cameraController.scale = options.scale ?? 1
         this.cameraController.x = options.x ?? this.canvas.width / 2
-        this.cameraController.y = options.y ?? this.canvas.height / 2
+        this.cameraController.y = options.y ?? 0
         this.wavController.smoothingFactor = options.lipsyncSmoothing ?? 0.1
         this.wavController.volumeNode.gain.value = options.volume ?? 1
         this.enablePhysics = options.enablePhysics ?? true
@@ -640,12 +642,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         const {x, y, scale} = this.cameraController
     
         const logicalX = this.logicalLeft + (x / this.canvas.width) * (this.logicalRight - this.logicalLeft)
-        const logicalY = this.logicalTop - (y / this.canvas.height) * (this.logicalTop - this.logicalBottom)
-    
+        const logicalY = this.logicalTop + (y / this.canvas.height) * (this.logicalTop - this.logicalBottom)
+
         const centerX = (this.logicalLeft + this.logicalRight) / 2
-        const centerY = (this.logicalTop + this.logicalBottom) / 2
-    
-        this.viewMatrix.translate(centerX - logicalX, centerY - logicalY)
+
+        this.viewMatrix.translate(centerX - logicalX, this.logicalTop - logicalY * (this.scaledYPos ? this.scale : 1))
         this.viewMatrix.scale(scale, scale)
     }
 
@@ -851,18 +852,22 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
     public centerModel = () => {
         this.x = this.canvas.width / 2
-        this.y = this.canvas.height / 2
+        this.y = 0
         this.update()
+        
         const clonedCanvas = document.createElement("canvas")
-        clonedCanvas.width = this.canvas.width
-        clonedCanvas.height = this.canvas.height
+        clonedCanvas.width = this.canvas.width / this.scale
+        clonedCanvas.height = this.canvas.height / this.scale
+
         const ctx = clonedCanvas.getContext("2d")
-        ctx.drawImage(this.canvas, 0, 0, clonedCanvas.width, clonedCanvas.height)
+        ctx.scale(1 / this.scale, 1 / this.scale)
+        ctx.drawImage(this.canvas, 0, 0)
+
         const imageData = ctx.getImageData(0, 0, clonedCanvas.width, clonedCanvas.height).data
 
         let firstNonTransparentY = clonedCanvas.height
         let lastNonTransparentY = 0
-        
+
         for (let y = 0; y < clonedCanvas.height; y++) {
             for (let x = 0; x < clonedCanvas.width; x++) {
                 if (imageData[(y * clonedCanvas.width + x) * 4 + 3] !== 0) {
@@ -873,49 +878,21 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
 
         const characterHeight = lastNonTransparentY - firstNonTransparentY
-        let marginHeight = (this.canvas.height - characterHeight) / 4
+        let marginHeight = this.canvas.height / 15 / this.scale
+        // let marginHeight = this.canvas.height / 10 * (this.scale - 1)
+        //let centerOffset = (characterHeight / 2) * (this.scale - 1) * this.scale
+        // const offsetY = (firstNonTransparentY * 10 * this.scale * this.scale)
 
-        const ratio = (firstNonTransparentY / clonedCanvas.height)
-        this.y += (ratio * this.canvas.height) - marginHeight
-    }
+        // this.y = centerOffset - marginHeight //- offsetY
 
-    public centerAndReposition = () => {
-        this.x = this.canvas.width / 2
-        this.y = this.canvas.height / 2
-        this.update()
-        const clonedCanvas = document.createElement("canvas")
-        clonedCanvas.width = this.canvas.width
-        clonedCanvas.height = this.canvas.height
-        const ctx = clonedCanvas.getContext("2d")
-        ctx.drawImage(this.canvas, 0, 0, clonedCanvas.width, clonedCanvas.height)
-        const imageData = ctx.getImageData(0, 0, clonedCanvas.width, clonedCanvas.height).data
-
-        let firstNonTransparentY = clonedCanvas.height
-        let lastNonTransparentY = 0
-        
-        for (let y = 0; y < clonedCanvas.height; y++) {
-            for (let x = 0; x < clonedCanvas.width; x++) {
-                if (imageData[(y * clonedCanvas.width + x) * 4 + 3] !== 0) {
-                    firstNonTransparentY = Math.min(firstNonTransparentY, y)
-                    lastNonTransparentY = Math.max(lastNonTransparentY, y)
-                }
-            }
-        }
-
-        const characterHeight = lastNonTransparentY - firstNonTransparentY
-        const scaledHeight = characterHeight * this.scale
-
-        this.y = (this.canvas.height / 2) - ((scaledHeight - characterHeight) / 2)
-
-        const margin = characterHeight * 0.1
-        this.y -= -(firstNonTransparentY * this.scale * 2) - margin
+        this.y = -firstNonTransparentY + marginHeight
     }
 
     public characterPosition = () => {
         const savedX = this.x
         const savedY = this.y
         this.x = this.canvas.width / 2
-        this.y = this.canvas.height / 2
+        this.y = 0
         this.update()
     
         const clonedCanvas = document.createElement("canvas")
@@ -938,10 +915,11 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 }
             }
         }
-    
+
         const characterHeight = lastNonTransparentY - firstNonTransparentY
-        const ratio = (firstNonTransparentY / clonedCanvas.height)
-        return {firstNonTransparentY, lastNonTransparentY, characterHeight, ratio}
+        let marginHeight = this.canvas.height / 15
+
+        return {firstNonTransparentY, lastNonTransparentY, characterHeight, marginHeight}
     }
 
     public getParameterName = (parameter: string) => {

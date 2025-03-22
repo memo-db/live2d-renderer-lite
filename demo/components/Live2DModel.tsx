@@ -34,15 +34,16 @@ const Live2DModel: React.FunctionComponent = (props) => {
 
     const load = async () => {
         let cubismCorePath = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"
-        const live2DModel = new Live2DCubismModel(rendererRef.current!, {cubismCorePath})
+        const live2DModel = new Live2DCubismModel(rendererRef.current!, {cubismCorePath, scale: 3, scaledYPos: true})
         live2DModel.canvas.width = 700
         live2DModel.canvas.height = 700
 
+        /*
         const arrayBuffer = await fetch(model).then((r) => r.arrayBuffer())
         const newBuffer = await compressLive2DTextures(arrayBuffer)
-        console.log(URL.createObjectURL(new Blob([new Uint8Array(newBuffer)])))
+        console.log(URL.createObjectURL(new Blob([new Uint8Array(newBuffer)])))*/
 
-        await live2DModel.load(newBuffer)
+        await live2DModel.load(model)
         setLive2D(live2DModel)
     }
 

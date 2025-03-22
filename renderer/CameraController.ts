@@ -18,7 +18,7 @@ export class CameraController {
     constructor(model: Live2DCubismModel) {
         this.model = model
         this.x = model.canvas.width / 2
-        this.y = model.canvas.height / 2
+        this.y = 0
         this.scale = 1
         this.minScale = 0.1
         this.maxScale = 10
@@ -34,11 +34,11 @@ export class CameraController {
         const newScale = Math.min(this.scale * zoomFactor, this.maxScale)
 
         const worldX = (this.x - this.model.canvas.width / 2) / this.scale
-        const worldY = (this.y - this.model.canvas.height / 2) / this.scale
+        const worldY = this.y / this.scale
 
         this.scale = newScale
         this.x = this.model.canvas.width / 2 + worldX * this.scale
-        this.y = this.model.canvas.height / 2 + worldY * this.scale
+        this.y = worldY * this.scale
     }
 
     public zoomOut = (factor = 0.1) => {
@@ -47,11 +47,11 @@ export class CameraController {
         const newScale = Math.max(this.scale * zoomFactor, this.minScale)
 
         const worldX = (this.x - this.model.canvas.width / 2) / this.scale
-        const worldY = (this.y - this.model.canvas.height / 2) / this.scale
+        const worldY = this.y / this.scale
 
         this.scale = newScale
         this.x = this.model.canvas.width / 2 + worldX * this.scale
-        this.y = this.model.canvas.height / 2 + worldY * this.scale
+        this.y = worldY * this.scale
     }
 
     public handleMouseDown = (event: MouseEvent) => {
@@ -67,7 +67,7 @@ export class CameraController {
             const dy = event.clientY - this.lastPosition.y
 
             this.x -= dx * this.panSpeed
-            this.y -= dy * this.panSpeed
+            this.y += dy * this.panSpeed
 
             this.lastPosition = {x: event.clientX, y: event.clientY}
         }
@@ -87,7 +87,7 @@ export class CameraController {
 
         const bounds = this.model.canvas.getBoundingClientRect()
         const mouseX = bounds.width - (event.clientX - bounds.left)
-        const mouseY = bounds.height - (event.clientY - bounds.top)
+        const mouseY = (event.clientY - bounds.top) - (bounds.height / 2)
         
         const worldX = (mouseX - this.x) / this.scale
         const worldY = (mouseY - this.y) / this.scale
@@ -100,7 +100,7 @@ export class CameraController {
     public handleDoubleClick = () => {
         if (this.doubleClickReset) {
             this.x = this.model.canvas.width / 2
-            this.y = this.model.canvas.height / 2
+            this.y = 0
             this.isPanning = false
             this.lastPosition = {x: 0, y: 0}
             this.scale = 1
