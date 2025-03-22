@@ -885,7 +885,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
         // this.y = centerOffset - marginHeight //- offsetY
 
-        this.y = -firstNonTransparentY + marginHeight
+        this.y = -firstNonTransparentY * 1.1 + marginHeight
     }
 
     public characterPosition = () => {
