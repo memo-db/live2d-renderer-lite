@@ -148,7 +148,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public enablePose: boolean
     public size: number
     public maxTextureSize: number
-    public scaledYPos: boolean
     public totalMotionCount: number = 0
     public needsResize: boolean = false
     public loaded: boolean = false
@@ -295,7 +294,6 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.randomMotion = options.randomMotion ?? true
         this._paused = options.paused ?? false
         this.speed = options.speed ?? 1
-        this.scaledYPos = options.scaledYPos ?? false
         this.audioContext = options.audioContext ?? new AudioContext()
         if (options.maxTextureSize) this.maxTextureSize = options.maxTextureSize
         if (options.connectNode) this.connectNode = options.connectNode
@@ -646,7 +644,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
         const centerX = (this.logicalLeft + this.logicalRight) / 2
 
-        this.viewMatrix.translate(centerX - logicalX, this.logicalTop - logicalY * (this.scaledYPos ? this.scale : 1))
+        this.viewMatrix.translate(centerX - logicalX, this.logicalTop - logicalY)
         this.viewMatrix.scale(scale, scale)
     }
 
@@ -878,14 +876,12 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
 
         const characterHeight = lastNonTransparentY - firstNonTransparentY
-        let marginHeight = this.canvas.height / 15 / this.scale
-        // let marginHeight = this.canvas.height / 10 * (this.scale - 1)
-        //let centerOffset = (characterHeight / 2) * (this.scale - 1) * this.scale
-        // const offsetY = (firstNonTransparentY * 10 * this.scale * this.scale)
+        let marginHeight = this.canvas.height / 10 * (this.scale - 1)
+        let centerOffset = (characterHeight / 2) * (this.scale - 1) * this.scale
+        let offsetY = (firstNonTransparentY * (1.5*this.scale**this.scale) * (this.scale - 1))
+        if (this.scale === 1) offsetY = firstNonTransparentY - this.canvas.height / 15
 
-        // this.y = centerOffset - marginHeight //- offsetY
-
-        this.y = -firstNonTransparentY * 1.1 + marginHeight
+        this.y = centerOffset - marginHeight - offsetY
     }
 
     public characterPosition = () => {
