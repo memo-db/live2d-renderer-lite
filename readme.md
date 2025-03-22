@@ -103,8 +103,6 @@ export interface Live2DModelOptions {
     connectNode?: AudioNode = audioContext.createGain()
     // Maximum texture size. Must be a power of 2. Defaults to the WebGL max (usually 8192).
     maxTextureSize?: number = 8192
-    // Apply scaling when transforming y-position
-    scaledYPos?: boolean = false
     // You can toggle various features in the animation loop.
     enablePhysics?: boolean = true
     enableEyeblink?: boolean = true
