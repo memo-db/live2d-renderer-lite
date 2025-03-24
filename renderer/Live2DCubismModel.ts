@@ -880,12 +880,12 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
 
         const characterHeight = lastNonTransparentY - firstNonTransparentY
-        let marginHeight = this.canvas.height / 10 / this.scale
+        let marginHeight = this.canvas.height / 15 / this.scale
         let centerOffset = (characterHeight / 2) * (this.scale - 1) * this.scale
         let offsetY = (firstNonTransparentY * (1.5*this.scale**this.scale) * (this.scale - 1))
 
         if (this.scaledYPos) {
-            this.y = -firstNonTransparentY + marginHeight + this.appendYOffset
+            this.y = -firstNonTransparentY * 1.1 + marginHeight + this.appendYOffset
         } else {
             if (this.scale === 1) {
                 offsetY = firstNonTransparentY - this.canvas.height / 15
