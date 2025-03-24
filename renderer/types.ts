@@ -24,6 +24,8 @@ export interface Live2DModelOptions {
     audioContext?: AudioContext
     connectNode?: AudioNode
     maxTextureSize?: number
+    scaledYPos?: boolean
+    appendYOffset?: number
     enablePhysics?: boolean
     enableEyeblink?: boolean
     enableBreath?: boolean

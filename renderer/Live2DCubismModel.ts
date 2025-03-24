@@ -148,6 +148,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
     public enablePose: boolean
     public size: number
     public maxTextureSize: number
+    public scaledYPos: boolean
+    public appendYOffset: number
     public totalMotionCount: number = 0
     public needsResize: boolean = false
     public loaded: boolean = false
@@ -295,6 +297,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this._paused = options.paused ?? false
         this.speed = options.speed ?? 1
         this.audioContext = options.audioContext ?? new AudioContext()
+        this.scaledYPos = options.scaledYPos ?? false
+        this.appendYOffset = options.appendYOffset ?? 0
         if (options.maxTextureSize) this.maxTextureSize = options.maxTextureSize
         if (options.connectNode) this.connectNode = options.connectNode
         this.wavController = new WavFileController(this)
@@ -644,7 +648,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
         const centerX = (this.logicalLeft + this.logicalRight) / 2
 
-        this.viewMatrix.translate(centerX - logicalX, this.logicalTop - logicalY)
+        this.viewMatrix.translate(centerX - logicalX, this.logicalTop - logicalY * (this.scaledYPos ? scale : 1))
         this.viewMatrix.scale(scale, scale)
     }
 
@@ -876,12 +880,19 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
 
         const characterHeight = lastNonTransparentY - firstNonTransparentY
-        let marginHeight = this.canvas.height / 10 * (this.scale - 1)
+        let marginHeight = this.canvas.height / 10 / this.scale
         let centerOffset = (characterHeight / 2) * (this.scale - 1) * this.scale
         let offsetY = (firstNonTransparentY * (1.5*this.scale**this.scale) * (this.scale - 1))
-        if (this.scale === 1) offsetY = firstNonTransparentY - this.canvas.height / 15
 
-        this.y = centerOffset - marginHeight - offsetY
+        if (this.scaledYPos) {
+            this.y = -firstNonTransparentY + marginHeight + this.appendYOffset
+        } else {
+            if (this.scale === 1) {
+                offsetY = firstNonTransparentY - this.canvas.height / 15
+                marginHeight = 0
+            }
+            this.y = centerOffset - marginHeight - offsetY + this.appendYOffset
+        }
     }
 
     public characterPosition = () => {
