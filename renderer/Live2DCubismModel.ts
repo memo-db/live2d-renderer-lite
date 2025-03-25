@@ -648,8 +648,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
 
         const centerX = (this.logicalLeft + this.logicalRight) / 2
 
-        this.viewMatrix.translate(centerX - logicalX, this.logicalTop - logicalY * (this.scaledYPos ? scale : 1))
         this.viewMatrix.scale(scale, scale)
+        this.viewMatrix.translate(centerX - logicalX, this.logicalTop - logicalY * (this.scaledYPos ? scale : 1))
     }
 
     public updateProjection = () => {
@@ -903,9 +903,10 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.update()
     
         const clonedCanvas = document.createElement("canvas")
-        clonedCanvas.width = this.canvas.width
-        clonedCanvas.height = this.canvas.height
+        clonedCanvas.width = this.canvas.width / this.scale
+        clonedCanvas.height = this.canvas.height / this.scale
         const ctx = clonedCanvas.getContext("2d")
+        ctx.scale(1 / this.scale, 1 / this.scale)
         ctx.drawImage(this.canvas, 0, 0, clonedCanvas.width, clonedCanvas.height)
         this.x = savedX
         this.y = savedY
