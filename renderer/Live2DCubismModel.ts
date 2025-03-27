@@ -608,8 +608,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         }
 
         const aspectRatio = this.canvas.width / this.canvas.height
-        const logicalWidth = 2
-        const logicalHeight = 2 / aspectRatio
+        const logicalHeight = 2
+        const logicalWidth = logicalHeight * aspectRatio
 
         this.logicalLeft = -logicalWidth / 2
         this.logicalRight = logicalWidth / 2
@@ -620,13 +620,8 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.viewMatrix.scale(1, 1)
 
         this.deviceToScreen.loadIdentity()
-        if (this.canvas.width > this.canvas.height) {
-          const screenW = Math.abs(this.logicalRight - this.logicalLeft)
-          this.deviceToScreen.scaleRelative(screenW / this.canvas.width, -screenW / this.canvas.width)
-        } else {
-          const screenH = Math.abs(this.logicalTop - this.logicalBottom)
-          this.deviceToScreen.scaleRelative(screenH / this.canvas.height, -screenH / this.canvas.height)
-        }
+        const screenScale = logicalHeight / this.canvas.height
+        this.deviceToScreen.scaleRelative(screenScale, -screenScale)
         this.deviceToScreen.translateRelative(-this.canvas.width * 0.5, -this.canvas.height * 0.5)
 
         this.viewMatrix.setMinScale(this.minScale)
