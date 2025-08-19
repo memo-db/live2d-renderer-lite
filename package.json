@@ -1,7 +1,7 @@
 {
-  "name": "live2d-renderer",
-  "version": "0.6.3",
-  "description": "An easy and simple to use Live2D model renderer in the browser.",
+  "name": "live2d-renderer-lite",
+  "version": "0.1.0",
+  "description": "Fork of live2d-renderer, An easy and simple to use Live2D model renderer in the browser.",
   "main": "build/live2dcubism.js",
   "types": "build/live2dcubism.d.ts",
   "scripts": {
@@ -22,10 +22,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Moebits/Live2D-Renderer"
+    "url": "https://github.com/memo-db/live2d-renderer-lite"
   },
-  "homepage": "https://live2d-renderer.netlify.app/",
-  "author": "Moebits",
+  "homepage": "https://github.com/memo-db/live2d-renderer-lite",
+  "author": "memo-db",
   "license": "MIT",
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -74,9 +74,5 @@
     "webpack-dev-middleware": "^7.4.2",
     "webpack-hot-middleware": "^2.26.1",
     "webpack-node-externals": "^2.5.2"
-  },
-  "dependencies": {
-    "jszip": "^3.10.1",
-    "magic-bytes.js": "^1.10.0"
   }
 }

@@ -1,3 +1,23 @@
+## Fork Information
+
+`live2d-renderer-lite` is a fork of [live2d-renderer](https://github.com/Moebits/live2d-renderer). It's a streamlined version focusing on core Live2D rendering functionality. Key changes include:
+
+*   **Removed ZIP File Support:** The ability to read Live2D files directly from ZIP archives has been removed. This reduces the package size and simplifies the codebase. Consequently, dependencies related to ZIP file handling have also been removed.
+*   **Integrated `live2dcubismcore.js`:** The core Live2D Cubism library (`live2dcubismcore.js`) is now directly integrated into the project. This eliminates the need for external dependencies and ensures consistent performance.
+*   **JavaScript Function Replacement:** All Node.js-specific functions have been replaced with equivalent JavaScript functions. This makes the library more portable and compatible with a wider range of environments, including browsers and other JavaScript runtimes.
+
+**Implications for Usage:**
+
+*   You'll need to provide the Live2D model data in a format other than a ZIP archive.  Consider extracting the model data from the ZIP file beforehand.
+*   The API might have slight variations due to the removal of ZIP handling.  Refer to the API documentation for details.
+
+### Insallation
+```ts
+npm install live2d-renderer-lite
+```
+
+---
+<!--
 <div align="left">
   <p>
     <img src="https://github.com/Moebits/live2d-renderer/blob/main/assets/live2dlogo.png?raw=true" width="700" />
@@ -6,6 +26,7 @@
     <a href="https://nodei.co/npm/live2d-renderer/"><img src="https://nodei.co/npm/live2d-renderer.png" /></a>
   </p>
 </div>
+-->
 
 The Live2D Cubism SDK can be complex, and this project aims to do all the heavy lifting for you so you only have to 
 worry about loading and interacting with your models. We support loading Live2D Cubism 5 models (which should also be 

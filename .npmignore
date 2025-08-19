@@ -4,6 +4,7 @@ dist
 models
 sample
 core
+assets
 demo
 build/core
 demo.html

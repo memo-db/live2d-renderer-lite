@@ -20,12 +20,12 @@ import {ExpressionController} from "./ExpressionController"
 import {CameraController} from "./CameraController"
 import {WebGLRenderer} from "./WebGLRenderer"
 import {Live2DModelOptions, Live2DBuffers, CubismCDI3Json, VTubeStudioJson, EventMap} from "./types"
-import fileType from "magic-bytes.js"
+/*import fileType from "magic-bytes.js"
 import JSZip from "jszip"
 import path from "path"
-
+*/
 let id = null
-
+/*
 export const isLive2DZip = async (arrayBuffer: ArrayBuffer) => {
     let isZip = false
     const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
@@ -46,10 +46,11 @@ export const isLive2DZip = async (arrayBuffer: ArrayBuffer) => {
     }
     
     return hasModel && hasMoc3 && hasTexture
-}
+}*/
 
 export const compressLive2DTextures = async (arrayBuffer: ArrayBuffer, maxSize = 8192, quality = 0.8, format = "webp") => {
-    const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
+    return arrayBuffer
+    /*const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
     if (result.mime !== "application/zip") return arrayBuffer
     
     const zip = await JSZip.loadAsync(arrayBuffer)
@@ -93,7 +94,7 @@ export const compressLive2DTextures = async (arrayBuffer: ArrayBuffer, maxSize =
         }
     }
     const newBuffer = await newZip.generateAsync({type: "arraybuffer"})
-    return newBuffer
+    return newBuffer*/
 }
 
 export class Live2DCubismModel extends Live2DCubismUserModel {
@@ -389,18 +390,38 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         let isZip = false
         let arrayBuffer = link instanceof ArrayBuffer ? link : new ArrayBuffer(0)
         if (typeof link === "string") {
-            isZip = path.extname(link).replace(".", "") === "zip"
+            // isZip = path.extname(link).replace(".", "") === "zip"
             arrayBuffer = await fetch(link).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
         }
         if (!arrayBuffer.byteLength) return Promise.reject(`Failed to load ${link}`)
-
+/*
         const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
         if (result.mime === "application/zip") isZip = true
 
-        let files = {} as {[key: string]: ArrayBuffer}
-        let basename = link instanceof ArrayBuffer ? "." : path.dirname(link)
+        let files = {} as {[key: string]: ArrayBuffer}*/
+        //let basename = link instanceof ArrayBuffer ? "." : path.dirname(link)
+        function dirname(link: any) {
+            if (!link) {
+                return ".";
+            }
+            const linkStr = String(link);
+            let normalizedLink = linkStr.endsWith('/') || linkStr.endsWith('\\') ? linkStr.slice(0, -1) : linkStr;
+            let lastSlashIndex = normalizedLink.lastIndexOf('/');
+            const backslashIndex = normalizedLink.lastIndexOf('\\');
+            if (backslashIndex > lastSlashIndex) {
+                lastSlashIndex = backslashIndex;
+            }
+            if (lastSlashIndex === -1) {
+                return ".";
+            } else if (lastSlashIndex === 0) {
+                return "/";
+            } else {
+                return normalizedLink.substring(0, lastSlashIndex);
+            }
+        }
+        let basename = dirname(link)
     
-        if (isZip) {
+        if (isZip) {/*
             const zip = await JSZip.loadAsync(arrayBuffer)
             this.size = arrayBuffer.byteLength
     
@@ -412,13 +433,13 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                 if (!this.settings && key.endsWith("model3.json")) this.settings = new CubismModelSettingJson(contents, contents.byteLength)
                 if (!this.vtubeSettings && key.endsWith("vtube.json")) this.vtubeSettings = JSON.parse(await file.async("string"))
                 if (!this.displayInfo && key.endsWith("cdi3.json")) this.displayInfo = JSON.parse(await file.async("string"))
-            }
+            }*/
         } else {
             this.settings = new CubismModelSettingJson(arrayBuffer, arrayBuffer.byteLength)
         }
     
         const getBuffer = async (filename: string) => {
-            if (isZip) {
+            if (isZip) {/*
                 let name = filename.startsWith(".") ? filename.split("/").slice(2).join("/") : filename
                 let buffer = null as ArrayBuffer | null
                 for (const [key, value] of Object.entries(files)) {
@@ -428,9 +449,22 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
                     }
                 }
                 if (!buffer?.byteLength) return Promise.reject(`Failed to load ${name}`)
-                return buffer
+                return buffer*/
             } else {
-                const filePath = path.join(basename, filename)
+                //const filePath = path.join(basename, filename)
+                function joinPaths(basename: string, filename: string) {
+                    if (!basename || basename === ".") {
+                        return filename;
+                    }
+                    if (!filename) {
+                        return basename;
+                    }
+                    const base = basename.endsWith('/') ? basename : basename + '/';
+                    const file = filename.startsWith('/') ? filename.slice(1) : filename;
+                    return base + file;
+                }
+                const filePath = joinPaths(basename, filename)
+
                 const buffer = await fetch(filePath).then(r => r.arrayBuffer()).catch(() => new ArrayBuffer(0))
                 if (!buffer.byteLength) return Promise.reject(`Failed to load ${filePath}`)
                 return buffer
