@@ -1,6 +1,6 @@
 {
   "name": "live2d-renderer-lite",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fork of live2d-renderer, An easy and simple to use Live2D model renderer in the browser.",
   "main": "build/live2dcubism.js",
   "types": "build/live2dcubism.d.ts",
@@ -17,6 +17,7 @@
     "live2d",
     "cubism",
     "model",
+    "viewer",
     "renderer",
     "animation"
   ],
