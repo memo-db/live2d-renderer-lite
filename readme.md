@@ -16,6 +16,21 @@
 npm install live2d-renderer-lite
 ```
 
+### Usage
+
+```ts
+import {Live2DCubismModel} from "live2d-renderer-lite"
+
+const loadLive2DModel = async () => {
+    const canvas = document.createElement("canvas")
+    canvas.width = 500
+    canvas.height = 500
+    const model = new Live2DCubismModel(canvas, options)
+    await model.load("Live2D Model.model3.json") // Load model3.json
+}
+loadLive2DModel();
+```
+
 ---
 <!--
 <div align="left">
@@ -54,7 +69,7 @@ You should import the class `Live2DCubismModel` and initialize it with your own 
 that your canvas has a width and height set. From there, call the asynchronous `load` method with a path to either a 
 zip containing all the json files and textures, or the path to model3.json (and the other paths will be resolved relative 
 to it).
-
+<!--
 ```ts
 import {Live2DCubismModel} from "live2d-renderer"
 
@@ -67,7 +82,7 @@ const loadLive2DModel = async () => {
     await model.load("Live2D Model.model3.json") // Load model3.json
 }
 ```
-
+-->
 ### Options
 
 By default, the model will begin animating automatically, but you can disable this to control it manually. The 

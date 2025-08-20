@@ -287,7 +287,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.projection = new CubismMatrix44()
         this.deviceToScreen = new CubismMatrix44()
         this.queueManager = new CubismMotionQueueManager()
-        this.cubismCorePath = options.cubismCorePath ?? "/node_modules/live2d-renderer-lite/core/live2dcubismcore.min.js"//"/live2dcubismcore.min.js"
+        this.cubismCorePath = options.cubismCorePath ?? "/node_modules/live2d-renderer-lite/core/live2dcubismcore.min.js"// "/live2dcubismcore.min.js"
         this.mocConsistency = options.checkMocConsistency ?? true
         this.premultipliedAlpha = options.premultipliedAlpha ?? true
         this.autoAnimate = options.autoAnimate ?? true
