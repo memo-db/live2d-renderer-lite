@@ -1,6 +1,6 @@
 ## Fork Information
 
-`live2d-renderer-lite` is a fork of live2d-renderer([github](https://github.com/Moebits/live2d-renderer), [npm](https://www.npmjs.com/package/live2d-renderer)). It's a streamlined version focusing on core Live2D rendering functionality. Key changes include:
+`live2d-renderer-lite` is a fork of live2d-renderer([GitHub](https://github.com/Moebits/live2d-renderer), [npm](https://www.npmjs.com/package/live2d-renderer)). It's a streamlined version focusing on core Live2D rendering functionality. Key changes include:
 
 *   **Removed ZIP File Support:** The ability to read Live2D files directly from ZIP archives has been removed. This reduces the package size and simplifies the codebase. Consequently, dependencies related to ZIP file handling have also been removed.
 *   **Integrated `live2dcubismcore.js`:** The core Live2D Cubism library (`live2dcubismcore.js`) is now directly integrated into the project. This eliminates the need for external dependencies and ensures consistent performance.

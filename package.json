@@ -1,15 +1,16 @@
 {
   "name": "live2d-renderer-lite",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Fork of live2d-renderer, An easy and simple to use Live2D model renderer in the browser.",
   "main": "build/live2dcubism.js",
   "types": "build/live2dcubism.d.ts",
   "scripts": {
     "start": "npm run clean && TESTING=yes webpack && node dist/server.js",
-    "build": "npm run clean-build && tsc && npm run clean-core",
+    "build": "npm run clean-build && tsc && npm run clean-core && npm run copy-core",
     "clean": "del-cli ./dist",
     "clean-build": "del-cli ./build",
     "clean-core": "del-cli ./build/core",
+    "copy-core": "mkdir ./build/core && cp ./core/live2dcubismcore.min.js ./build/core/",
     "predeploy": "npm run clean && webpack",
     "deploy": "gh-pages -d dist"
   },
