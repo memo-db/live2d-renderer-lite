@@ -1,6 +1,6 @@
 {
   "name": "live2d-renderer-lite",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Fork of live2d-renderer, An easy and simple to use Live2D model renderer in the browser.",
   "main": "build/live2dcubism.js",
   "types": "build/live2dcubism.d.ts",
@@ -25,7 +25,7 @@
     "type": "git",
     "url": "https://github.com/memo-db/live2d-renderer-lite"
   },
-  "homepage": "https://github.com/memo-db/live2d-renderer-lite",
+  "homepage": "https://memo-db.eu.org/app/live2d",
   "author": "memo-db",
   "license": "MIT",
   "devDependencies": {
