@@ -7,14 +7,14 @@ import {MotionController} from "./renderer/MotionController"
 import {TouchController} from "./renderer/TouchController"
 import {WebGLRenderer} from "./renderer/WebGLRenderer"
 import {Live2DModelOptions, Live2DBuffers, MotionPriority, CubismCDI3Json, VTubeStudioJson} from "./renderer/types"
-import {/*isLive2DZip, */compressLive2DTextures} from "./renderer/Live2DCubismModel"
+/*import {isLive2DZip, compressLive2DTextures} from "./renderer/Live2DCubismModel"*/
 
 export {
     Live2DCubismModel, Live2DCubismUserModel, 
     WavFileController, CameraController, TouchController,
     Live2DModelOptions, Live2DBuffers, MotionPriority,
     ExpressionController, MotionController, WebGLRenderer,
-    /*isLive2DZip, */compressLive2DTextures, CubismCDI3Json, 
+    /*isLive2DZip, compressLive2DTextures, */CubismCDI3Json, 
     VTubeStudioJson
 }
 

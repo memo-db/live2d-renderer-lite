@@ -46,11 +46,9 @@ export const isLive2DZip = async (arrayBuffer: ArrayBuffer) => {
     }
     
     return hasModel && hasMoc3 && hasTexture
-}*/
-
+}
 export const compressLive2DTextures = async (arrayBuffer: ArrayBuffer, maxSize = 8192, quality = 0.8, format = "webp") => {
-    return arrayBuffer
-    /*const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
+    const result = fileType(new Uint8Array(arrayBuffer))?.[0] || {mime: ""}
     if (result.mime !== "application/zip") return arrayBuffer
     
     const zip = await JSZip.loadAsync(arrayBuffer)
@@ -94,9 +92,9 @@ export const compressLive2DTextures = async (arrayBuffer: ArrayBuffer, maxSize =
         }
     }
     const newBuffer = await newZip.generateAsync({type: "arraybuffer"})
-    return newBuffer*/
+    return newBuffer
 }
-
+*/
 export class Live2DCubismModel extends Live2DCubismUserModel {
     private events: {[event: string]: Function[]} = {}
     private _paused: boolean

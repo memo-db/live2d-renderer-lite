@@ -15,7 +15,8 @@
         "declaration": true,
         "skipLibCheck": true,
         "resolveJsonModule": true,
-        "noEmit": false
+        "noEmit": false,
+        "emitDeclarationOnly": true,
     },
     "exclude": [
         "node_modules",
