@@ -1,13 +1,11 @@
-import typescript from '@rollup/plugin-typescript';
+import { defineConfig } from 'rolldown';
 import packageJson from './package.json' with { type: 'json' };
 
-export default {
+export default defineConfig({
   input: 'live2dcubism.ts',
   output: {
     file: packageJson.main,
     format: 'esm',
+    minify: true,
   },
-  plugins: [
-    typescript(),
-  ],
-};
+});

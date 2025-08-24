@@ -6,7 +6,7 @@ import {ExpressionController} from "./renderer/ExpressionController"
 import {MotionController} from "./renderer/MotionController"
 import {TouchController} from "./renderer/TouchController"
 import {WebGLRenderer} from "./renderer/WebGLRenderer"
-import {Live2DModelOptions, Live2DBuffers, MotionPriority, CubismCDI3Json, VTubeStudioJson} from "./renderer/types"
+import type {Live2DModelOptions, Live2DBuffers, MotionPriority, CubismCDI3Json, VTubeStudioJson} from "./renderer/types"
 /*import {isLive2DZip, compressLive2DTextures} from "./renderer/Live2DCubismModel"*/
 
 export {
