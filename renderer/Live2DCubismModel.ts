@@ -22,8 +22,8 @@ import {WebGLRenderer} from "./WebGLRenderer"
 import {Live2DModelOptions, Live2DBuffers, CubismCDI3Json, VTubeStudioJson, EventMap} from "./types"
 /*import fileType from "magic-bytes.js"
 import JSZip from "jszip"
-import path from "path"
-*/
+import path from "path"*/
+declare const __CUBISM_CORE_SOURCE__: string
 let id = null
 /*
 export const isLive2DZip = async (arrayBuffer: ArrayBuffer) => {
@@ -285,7 +285,7 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.projection = new CubismMatrix44()
         this.deviceToScreen = new CubismMatrix44()
         this.queueManager = new CubismMotionQueueManager()
-        this.cubismCorePath = options.cubismCorePath ?? "https://gcore.jsdelivr.net/npm/live2d-renderer-lite/build/live2dcubismcore.min.js"// "/live2dcubismcore.min.js"
+        this.cubismCorePath = options.cubismCorePath// ?? "/live2dcubismcore.min.js"
         this.mocConsistency = options.checkMocConsistency ?? true
         this.premultipliedAlpha = options.premultipliedAlpha ?? true
         this.autoAnimate = options.autoAnimate ?? true
@@ -358,18 +358,30 @@ export class Live2DCubismModel extends Live2DCubismUserModel {
         this.cubismLoaded = false
         this.model.release()
         if (destroyCubism) CubismFramework.dispose()
+        // remove script
+        CubismFramework.dispose()
+        const script = document.querySelector("script#live2d-cubism-core")
+        if (script) script.remove()
     }
 
     public loadCubismCore = async () => {
         await new Promise<void>(async (resolve, reject) => {
-            if (document.querySelector(`script[src="${this.cubismCorePath}"]`)) {
+            /* if (document.querySelector(`script[src="${this.cubismCorePath}"]`)) 
                 return resolve()
-            }
+            } */
+            if (document.querySelector("script#live2d-cubism-core")) return resolve()
             const script = document.createElement("script")
-            script.src = this.cubismCorePath
-            document.body.appendChild(script)
-            script.onload = () => resolve()
-            script.onerror = (err) => reject(err)
+            script.id = "live2d-cubism-core"
+            if (this.cubismCorePath) {
+                script.src = this.cubismCorePath
+                document.body.appendChild(script)
+                script.onload = () => resolve()
+                script.onerror = (err) => reject(err)
+            } else {
+                script.text = __CUBISM_CORE_SOURCE__
+                document.body.appendChild(script)
+                resolve()
+            }
         })
     }
 

@@ -4,7 +4,7 @@
 
 *   **Removed ZIP File Support:** The ability to read Live2D files directly from ZIP archives has been removed. This reduces the package size and simplifies the codebase. Consequently, dependencies related to ZIP file handling have also been removed.
 *   **Integrated `live2dcubismcore.js`:** The core Live2D Cubism library (`live2dcubismcore.js`) is now directly integrated into the project. This eliminates the need for external dependencies and ensures consistent performance.
-*   **Build Optimization:** Switched build tool from `tsc` to `Rollup` for improved performance and reduced bundle size.
+*   **Build Optimization:** Switched build tool from `tsc` to `Rolldown` for improved performance and reduced bundle size.
 
 **Implications for Usage:**
 
@@ -59,8 +59,8 @@ npm install live2d-renderer
 
 ### Live2D Cubism Core
 
-You need to install Live2D Cubism Core, a proprietary library for loading moc3 files. You must point 
-the option `cubismCorePath` to a link containing `live2dcubismcore.min.js` (or the unminified version). You can 
+~~You need to install Live2D Cubism Core, a proprietary library for loading moc3 files. You must point 
+the option `cubismCorePath` to a link containing `live2dcubismcore.min.js` (or the unminified version).~~ You can 
 download the library [here](https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js).
 
 ### Usage
@@ -101,7 +101,7 @@ export interface Live2DModelOptions {
     // Resizes the aspect ratio of your canvas to match the model dimensions.
     keepAspect?: boolean = false
     // Link to the Cubism Core Library. It will be appended as a script tag if it isn't already.
-    cubismCorePath?: string = "live2dcubismcore.min.js"
+    cubismCorePath?: string// = "live2dcubismcore.min.js"
     // Whether the animations are currently paused.
     paused?: boolean = false
     // The speed of the animation eg. 0.5 is half as fast.

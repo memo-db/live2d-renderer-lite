@@ -1,6 +1,8 @@
 *
 !build/
 !build/**/*
+!core/
+!core/**/*
 !license.txt
 !package.json
 !readme.md
