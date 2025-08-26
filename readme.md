@@ -1,3 +1,7 @@
+[![npm version](https://img.shields.io/npm/v/live2d-renderer-lite?style=flat-square&logo=npm&label=live2d-renderer-lite&labelColor=%23cc3534&color=%23FF6e2d)](https://www.npmjs.com/package/live2d-renderer-lite)
+[![npm monthly downloads](https://img.shields.io/npm/dm/live2d-renderer-lite?style=flat-square&logo=npm&labelColor=%23cc3534&color=%23FF6e2d)](https://www.npmjs.com/package/live2d-renderer-lite)
+
+
 ## Fork Information
 
 `live2d-renderer-lite` is a fork of live2d-renderer([GitHub](https://github.com/Moebits/live2d-renderer), [npm](https://www.npmjs.com/package/live2d-renderer)). It's a streamlined version focusing on core Live2D rendering functionality. Key changes include:
@@ -10,6 +14,7 @@
 
 *   You'll need to provide the Live2D model data in a format other than a ZIP archive.  Consider extracting the model data from the ZIP file beforehand.
 *   The API might have slight variations due to the removal of ZIP handling.  Refer to the API documentation for details.
+*   Live2D Cubism SDK Version: 5.1.0, Cubism 5 SDK for Web R4.
 
 ### Insallation
 ```ts
