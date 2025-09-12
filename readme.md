@@ -1,37 +1,42 @@
-[![npm version](https://img.shields.io/npm/v/live2d-renderer-lite?style=flat-square&logo=npm&label=live2d-renderer-lite&labelColor=%23cc3534&color=%23FF6e2d)](https://www.npmjs.com/package/live2d-renderer-lite)
-[![npm monthly downloads](https://img.shields.io/npm/dm/live2d-renderer-lite?style=flat-square&logo=npm&labelColor=%23cc3534&color=%23FF6e2d)](https://www.npmjs.com/package/live2d-renderer-lite)
+[![live2d-renderer-lite](https://img.shields.io/npm/v/live2d-renderer-lite?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNjMuMzIgMzM3LjUiPjxwYXRoIGQ9Ik0xNy4xMTMgMjM3Ny45N2MtNi4xMDUgMS40OC0xMS4wNDctMi40MS0xMS4wNDctOC42M1YxMjgxLjc1YzAtNi4yMyA0LjQwNy04LjgzIDkuODA5LTUuNjVsMjEwLjQ4NCAxMjMuMjNjNS40MTEgMy4xNyA5Ljg3NSAxMC44OCA5Ljg3NSAxNy4xNnY4OTUuNDZjMCA2LjI5LTUgMTIuNjQtMTEuMTE3IDE0LjE4bC0yMDguMDA0IDUxLjg0TTM3Ny44NDQgMjc0Ni42OGMtNy43NjIgMy4xOC0xNC4xMS0xLjE3LTE0LjExLTkuNTFWODgwLjIxOWMwLTguMzQgNS42NDEtMTEuMzk5IDEyLjYzNy02LjY4OGwzODUuNzkzIDI1OC4wNzljNi45MzggNC43MiAxMi42NDEgMTUuNDEgMTIuNjQxIDIzLjc1djE0MTcuNzFjMCA4LjM2LTYuMzUyIDE3Ljc1LTE0LjExIDIwLjg4bC0zODIuODUxIDE1Mi43M00xOTYwLjk3IDExMjAuMzhjMC0xMi41Mi04LjExLTI5LjE2LTE3Ljk5LTM2Ljg1bC02ODUuNS01MzYuOTAxYy05Ljg5LTcuNzUtMTcuOTQtMy43NTgtMTcuOTQgOC44MlYzMDYxLjk4YzAgMTIuNTkgOC42NCAxNy4zNSAxOS4yOCAxMC43MWw2ODIuODEtNDI5LjZjMTAuNjQtNi42NCAxOS4zNC0yMi4zOSAxOS4zNC0zNC45OFYxMTIwLjM4IiBzdHlsZT0iZmlsbDojZmZmO2ZpbGwtb3BhY2l0eToxO2ZpbGwtcnVsZTpub256ZXJvO3N0cm9rZTpub25lIiB0cmFuc2Zvcm09Im1hdHJpeCguMTMzMzMgMCAwIC0uMTMzMzMgMCA0MTAuMDkzKSIvPjwvc3ZnPg==&label=live2d-renderer-lite&labelColor=%2300a9e0&color=%234fC3f7)](https://memo-db.eu.org/app/live2d)
+[![live2d sdk version](https://img.shields.io/badge/core-Cubism_5_SDK_for_Web_R4-%23ff9800?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCIgd2lkdGg9IjQ4cHgiIGhlaWdodD0iNDhweCIgYmFzZVByb2ZpbGU9ImJhc2ljIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMTMuNzQ1LDM1LjA1NkwzOSw0NlYzMWwtMTEuMTI0LTQuODJsLTE0LjEzMSw2LjEyNEMxMi41NCwzMi44MjUsMTIuNTQsMzQuNTM0LDEzLjc0NSwzNS4wNTZ6Ii8+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTEzLjc0NSwzNS4wNTZMMzksNDZWMzFsLTExLjEyNC00LjgybC0xNC4xMzEsNi4xMjRDMTIuNTQsMzIuODI1LDEyLjU0LDM0LjUzNCwxMy43NDUsMzUuMDU2eiIvPjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Ik0xMy4wNjgsMjguMjM4TDM5LDE2Ljk5OVYyTDExLjQxLDEzLjk1NkM5Ljk0NywxNC41OSw5LDE2LjAzMiw5LDE3LjYyNlYzMS41CUM5LDMxLjUsOS41MDMsMjkuNjgyLDEzLjA2OCwyOC4yMzh6Ii8+PC9zdmc+&labelColor=%23ff6e2d)](https://www.live2d.com/en/sdk/download/web/)
+[![npm monthly downloads](https://img.shields.io/npm/dm/live2d-renderer-lite?style=flat&logo=npm&labelColor=%23cc3534&color=%23ef5350)](https://www.npmjs.com/package/live2d-renderer-lite)
+[![npm dependency count](https://img.shields.io/badge/dependency_count-0-%23ef5350?style=flat&logo=npm&labelColor=%23cc3534)](https://www.npmjs.com/package/live2d-renderer-lite)
+[![npm bundle minified + gzip size](https://img.shields.io/bundlephobia/minzip/live2d-renderer-lite?style=flat&logo=npm&labelColor=%23cc3534&color=%23ef5350)](https://bundlephobia.com/package/live2d-renderer-lite)
 
 
 ## Fork Information
 
-`live2d-renderer-lite` is a fork of live2d-renderer([GitHub](https://github.com/Moebits/live2d-renderer), [npm](https://www.npmjs.com/package/live2d-renderer)). It's a streamlined version focusing on core Live2D rendering functionality. Key changes include:
+`live2d-renderer-lite` is a fork of [Moebits/live2d-renderer](https://github.com/Moebits/live2d-renderer)
+[![live2d-renderer](https://img.shields.io/npm/v/live2d-renderer?style=flat&logo=npm&labelColor=%23cc3534&color=%23ef5350)](https://www.npmjs.com/package/live2d-renderer). It's a streamlined version focusing on core Live2D rendering functionality. Key changes include:
 
+*   **Cross platform:** works in the modern browsers and Node.js.
 *   **Removed ZIP File Support:** The ability to read Live2D files directly from ZIP archives has been removed. This reduces the package size and simplifies the codebase. Consequently, dependencies related to ZIP file handling have also been removed.
 *   **Integrated `live2dcubismcore.js`:** The core Live2D Cubism library (`live2dcubismcore.js`) is now directly integrated into the project. This eliminates the need for external dependencies and ensures consistent performance.
-*   **Build Optimization:** Switched build tool from `tsc` to `Rolldown` for improved performance and reduced bundle size.
+*   **Build Optimization:** Switched build tool from `tsc` to `rolldown` for improved performance and reduced bundle size.
 
 **Implications for Usage:**
 
 *   You'll need to provide the Live2D model data in a format other than a ZIP archive.  Consider extracting the model data from the ZIP file beforehand.
 *   The API might have slight variations due to the removal of ZIP handling.  Refer to the API documentation for details.
-*   Live2D Cubism SDK Version: 5.1.0, Cubism 5 SDK for Web R4.
+*   Live2D SDK Version: Cubism 5 SDK for Web R4.
 
 ### Insallation
-```ts
+```bash
 npm install live2d-renderer-lite
 ```
 
 ### Usage
 
 ```ts
-import {Live2DCubismModel} from "live2d-renderer-lite"
+import { Live2DCubismModel } from "live2d-renderer-lite"
 
 const loadLive2DModel = async () => {
-    const canvas = document.createElement("canvas")
-    canvas.width = 500
-    canvas.height = 500
-    const model = new Live2DCubismModel(canvas, options)
-    await model.load("Live2D Model.model3.json") // Load model3.json
+    const canvas = document.createElement("canvas");
+    canvas.width = 500;
+    canvas.height = 500;
+    const model = new Live2DCubismModel(canvas, options);
+    await model.load("live2d_model.model3.json"); // Load model3.json
 }
 loadLive2DModel();
 ```
@@ -106,7 +111,7 @@ export interface Live2DModelOptions {
     // Resizes the aspect ratio of your canvas to match the model dimensions.
     keepAspect?: boolean = false
     // Link to the Cubism Core Library. It will be appended as a script tag if it isn't already.
-    cubismCorePath?: string// = "live2dcubismcore.min.js"
+    cubismCorePath?: string
     // Whether the animations are currently paused.
     paused?: boolean = false
     // The speed of the animation eg. 0.5 is half as fast.
