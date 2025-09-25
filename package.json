@@ -1,8 +1,10 @@
 {
   "name": "live2d-renderer-lite",
-  "version": "0.3.2",
-  "description": "Fork of live2d-renderer, An easy and simple to use Live2D model renderer in the browser.",
+  "version": "0.3.3",
+  "description": "Fork of live2d-renderer, A lightweight and easy-to-use Live2D model renderer.",
   "type": "module",
+  "module": "./build/live2dcubism.js",
+  "types": "./build/live2dcubism.d.ts",
   "exports": {
     ".": {
       "import": "./build/live2dcubism.js",
@@ -32,9 +34,9 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^24.3.1",
+    "@types/node": "^24.5.2",
     "rolldown": "^1.0.0-beta.33",
-    "rolldown-plugin-dts": "^0.16.2",
+    "rolldown-plugin-dts": "^0.16.8",
     "typescript": "^5.9.2"
   }
 }
